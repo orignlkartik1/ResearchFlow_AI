@@ -4,14 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="changing the file">
-      <change afterPath="$PROJECT_DIR$/bot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="file changes">
+      <change afterPath="$PROJECT_DIR$/my_agent/sub_agents/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/bot.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="27" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -23,41 +27,41 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "orignlkartik1"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;orignlkartik1&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/orignlkartik1/ReasearchFlow_AI.git",
-    "accountId": "0e7aabc7-d1d8-4711-bd52-06a8861487d5"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/orignlkartik1/ReasearchFlow_AI.git&quot;,
+    &quot;accountId&quot;: &quot;0e7aabc7-d1d8-4711-bd52-06a8861487d5&quot;
   }
-}]]></component>
+}</component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0039678000760737" />
-      <entry key="MS500" value="1.4370512542833775" />
-      <entry key="S2" value="2.7300312439968515" />
-      <entry key="S5" value="4.1286945168137095" />
-      <entry key="S10" value="5.919189379805841" />
-      <entry key="S30" value="9.500118464424002" />
-      <entry key="S60" value="12.146394028923936" />
-      <entry key="M2" value="15.896030609391097" />
-      <entry key="M5" value="21.955363719509513" />
-      <entry key="M10" value="27.9502329054182" />
-      <entry key="M15" value="33.84725483331316" />
-      <entry key="M30" value="47.781959887403204" />
-      <entry key="H1" value="61.53004721732086" />
-      <entry key="H2" value="71.3775651984317" />
-      <entry key="H4" value="77.2957964118838" />
-      <entry key="D1" value="82.82362970066909" />
-      <entry key="W1" value="83.83044069840433" />
+      <entry key="MS100" value="1.000000021263857" />
+      <entry key="MS500" value="1.0405321993370806" />
+      <entry key="S2" value="1.7398032695866874" />
+      <entry key="S5" value="2.3413607167084836" />
+      <entry key="S10" value="2.637448400777881" />
+      <entry key="S30" value="2.8753937534903926" />
+      <entry key="S60" value="3.0295018252748243" />
+      <entry key="M2" value="3.4597045032861184" />
+      <entry key="M5" value="6.247022709259803" />
+      <entry key="M10" value="13.426107539210843" />
+      <entry key="M15" value="20.657475281874536" />
+      <entry key="M30" value="38.18049697146543" />
+      <entry key="H1" value="57.166982363559015" />
+      <entry key="H2" value="71.87335653033131" />
+      <entry key="H4" value="81.1369369190173" />
+      <entry key="D1" value="90.06615240223393" />
+      <entry key="W1" value="91.72054104320416" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -79,54 +83,61 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.956314605046571" />
-      <entry key="MS500" value="1.4211243870654309" />
-      <entry key="S2" value="2.721971824357114" />
-      <entry key="S5" value="4.114631075365702" />
-      <entry key="S10" value="5.874861979254127" />
-      <entry key="S30" value="9.439266088548028" />
-      <entry key="S60" value="12.10259203055842" />
-      <entry key="M2" value="15.8696241255205" />
-      <entry key="M5" value="21.943463269393586" />
-      <entry key="M10" value="27.94398600413927" />
-      <entry key="M15" value="33.842984015203655" />
-      <entry key="M30" value="47.77973189073547" />
-      <entry key="H1" value="61.52889380569269" />
-      <entry key="H2" value="71.37697512385122" />
-      <entry key="H4" value="77.29549744880413" />
-      <entry key="D1" value="82.82357927018545" />
-      <entry key="W1" value="83.8304334784529" />
+      <entry key="MS100" value="2.98421089040494E-8" />
+      <entry key="MS500" value="0.04853369678023559" />
+      <entry key="S2" value="1.0218709753450095" />
+      <entry key="S5" value="1.9424528128644107" />
+      <entry key="S10" value="2.4124364128371085" />
+      <entry key="S30" value="2.793854169487101" />
+      <entry key="S60" value="2.987834269938451" />
+      <entry key="M2" value="3.438561908022104" />
+      <entry key="M5" value="6.2375729950773" />
+      <entry key="M10" value="13.42008212554155" />
+      <entry key="M15" value="20.6527896536008" />
+      <entry key="M30" value="38.17760503606057" />
+      <entry key="H1" value="57.16533022056743" />
+      <entry key="H2" value="71.87246559043025" />
+      <entry key="H4" value="81.13647309064994" />
+      <entry key="D1" value="90.06607233677965" />
+      <entry key="W1" value="91.72052953469426" />
     </decayedShown>
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2,
-  "fromUser": false
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2,
+  &quot;fromUser&quot;: false
+}</component>
   <component name="ProjectId" id="3Fqh6nm1oPOJwK0PszRq4QhHD7O" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "master",
-    "junie.onboarding.icon.badge.shown": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "to.speed.mode.migration.done": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.bot.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\karti\PycharmProjects\ReasearchFlow_AI\my_agent" />
+      <recent name="C:\Users\karti\PycharmProjects\ReasearchFlow_AI\my_agent\sub_agents" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -174,7 +185,15 @@
       <option name="project" value="LOCAL" />
       <updated>1782812229801</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="file changes">
+      <option name="closed" value="true" />
+      <created>1782812554759</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1782812554759</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -185,6 +204,7 @@
     <MESSAGE value="make changes" />
     <MESSAGE value="making changes in files" />
     <MESSAGE value="changing the file" />
-    <option name="LAST_COMMIT_MESSAGE" value="changing the file" />
+    <MESSAGE value="file changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="file changes" />
   </component>
 </project>
