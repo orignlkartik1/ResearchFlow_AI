@@ -4,17 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/ReasearchFlow_AI.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/my_agent/prompt.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/prompt.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/my_agent/sub_agents/academic_webresearch/prompt.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="new commits">
+      <change beforePath="$PROJECT_DIR$/my_agent/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my_agent/agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/agent.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my_agent/prompt.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/prompt.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,29 +24,41 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "orignlkartik1"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/orignlkartik1/ReasearchFlow_AI.git",
+    "accountId": "0e7aabc7-d1d8-4711-bd52-06a8861487d5"
+  }
+}]]></component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0000000000004237" />
-      <entry key="S10" value="1.0000010719949217" />
-      <entry key="S30" value="1.0478343302804278" />
-      <entry key="S60" value="2.145833787756242" />
-      <entry key="M2" value="7.8678196479589015" />
-      <entry key="M5" value="23.399777041881237" />
-      <entry key="M10" value="34.938864586522314" />
-      <entry key="M15" value="40.077372017101574" />
-      <entry key="M30" value="46.049929473161114" />
-      <entry key="H1" value="49.392853557282315" />
-      <entry key="H2" value="51.16206706774906" />
-      <entry key="H4" value="52.072271015877085" />
-      <entry key="D1" value="52.8441465442742" />
-      <entry key="W1" value="52.9777048533537" />
+      <entry key="MS100" value="1.006274730148974" />
+      <entry key="MS500" value="1.5317373309749234" />
+      <entry key="S2" value="2.4179504387207613" />
+      <entry key="S5" value="2.7411136448197713" />
+      <entry key="S10" value="2.865746057274964" />
+      <entry key="S30" value="2.95413220158275" />
+      <entry key="S60" value="2.9769234668114626" />
+      <entry key="M2" value="2.9887457863171147" />
+      <entry key="M5" value="3.4054735994801306" />
+      <entry key="M10" value="7.623130762997003" />
+      <entry key="M15" value="13.408741704016792" />
+      <entry key="M30" value="26.46909951577659" />
+      <entry key="H1" value="38.2614558941183" />
+      <entry key="H2" value="46.228143351178296" />
+      <entry key="H4" value="50.864757521299225" />
+      <entry key="D1" value="55.10728647344936" />
+      <entry key="W1" value="55.871536956460446" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -75,23 +80,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.5904963307147651" />
-      <entry key="MS500" value="0.9000019297935121" />
-      <entry key="S2" value="0.974004268543241" />
-      <entry key="S5" value="0.9895194703806347" />
-      <entry key="S10" value="0.9947469995735598" />
-      <entry key="S30" value="1.0460412738889566" />
-      <entry key="S60" value="2.1446781355532782" />
-      <entry key="M2" value="7.866771411808847" />
-      <entry key="M5" value="23.398939143971052" />
-      <entry key="M10" value="34.938301842485046" />
-      <entry key="M15" value="40.07695517522098" />
-      <entry key="M30" value="46.04969710695481" />
-      <entry key="H1" value="49.39273072707306" />
-      <entry key="H2" value="51.162003900597455" />
-      <entry key="H4" value="52.07223898248851" />
-      <entry key="D1" value="52.84414114187543" />
-      <entry key="W1" value="52.97770408001376" />
+      <entry key="MS100" value="0.8824511811785962" />
+      <entry key="MS500" value="1.4961025442045728" />
+      <entry key="S2" value="2.4042651233637127" />
+      <entry key="S5" value="2.734911843845119" />
+      <entry key="S10" value="2.862503297036695" />
+      <entry key="S30" value="2.953017592275994" />
+      <entry key="S60" value="2.976361808655533" />
+      <entry key="M2" value="2.9884638152866265" />
+      <entry key="M5" value="3.4053458776025525" />
+      <entry key="M10" value="7.622999700370291" />
+      <entry key="M15" value="13.408595709062789" />
+      <entry key="M30" value="26.46896222360869" />
+      <entry key="H1" value="38.26135877165425" />
+      <entry key="H2" value="46.22808526244885" />
+      <entry key="H4" value="50.86472571764573" />
+      <entry key="D1" value="55.10728075327796" />
+      <entry key="W1" value="55.87153612851255" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
@@ -138,9 +143,22 @@
       <option name="presentableId" value="Default" />
       <updated>1782808335170</updated>
     </task>
+    <task id="LOCAL-00001" summary="new commits">
+      <option name="closed" value="true" />
+      <created>1782811664176</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1782811664176</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="new commits" />
+    <option name="LAST_COMMIT_MESSAGE" value="new commits" />
   </component>
 </project>

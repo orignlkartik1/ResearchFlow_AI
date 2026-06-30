@@ -1,7 +1,4 @@
 
-
-"""Academic_Research: Research advice, related literature finding, research area proposals, web knowledge access."""
-
 from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool
 
