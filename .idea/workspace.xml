@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="making changes in files">
-      <change beforePath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/agent.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/prompt.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/prompt.py" afterDir="false" />
+    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="changing the file">
+      <change afterPath="$PROJECT_DIR$/bot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,23 +41,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0054918948362856" />
-      <entry key="MS500" value="1.4510697839844435" />
-      <entry key="S2" value="2.7927952218182437" />
-      <entry key="S5" value="4.4220850059032575" />
-      <entry key="S10" value="5.728784069347011" />
-      <entry key="S30" value="7.201476785687092" />
-      <entry key="S60" value="8.417118340235339" />
-      <entry key="M2" value="10.50598841741306" />
-      <entry key="M5" value="13.848121966797489" />
-      <entry key="M10" value="18.412438912313437" />
-      <entry key="M15" value="23.88394695511247" />
-      <entry key="M30" value="37.173540804454184" />
-      <entry key="H1" value="50.15470803060388" />
-      <entry key="H2" value="59.34261869410988" />
-      <entry key="H4" value="64.82405316288137" />
-      <entry key="D1" value="69.91877445064905" />
-      <entry key="W1" value="70.84421735331775" />
+      <entry key="MS100" value="1.0039678000760737" />
+      <entry key="MS500" value="1.4370512542833775" />
+      <entry key="S2" value="2.7300312439968515" />
+      <entry key="S5" value="4.1286945168137095" />
+      <entry key="S10" value="5.919189379805841" />
+      <entry key="S30" value="9.500118464424002" />
+      <entry key="S60" value="12.146394028923936" />
+      <entry key="M2" value="15.896030609391097" />
+      <entry key="M5" value="21.955363719509513" />
+      <entry key="M10" value="27.9502329054182" />
+      <entry key="M15" value="33.84725483331316" />
+      <entry key="M30" value="47.781959887403204" />
+      <entry key="H1" value="61.53004721732086" />
+      <entry key="H2" value="71.3775651984317" />
+      <entry key="H4" value="77.2957964118838" />
+      <entry key="D1" value="82.82362970066909" />
+      <entry key="W1" value="83.83044069840433" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -80,23 +79,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9447183983175844" />
-      <entry key="MS500" value="1.4336386274417379" />
-      <entry key="S2" value="2.7840708924951922" />
-      <entry key="S5" value="4.4162792182796515" />
-      <entry key="S10" value="5.724943171238854" />
-      <entry key="S30" value="7.19984695172937" />
-      <entry key="S60" value="8.416168944219907" />
-      <entry key="M2" value="10.505393436301027" />
-      <entry key="M5" value="13.847797240995202" />
-      <entry key="M10" value="18.412207889423755" />
-      <entry key="M15" value="23.883737827891984" />
-      <entry key="M30" value="37.17337063815078" />
-      <entry key="H1" value="50.15459144147307" />
-      <entry key="H2" value="59.34254935054462" />
-      <entry key="H4" value="64.82401521051067" />
-      <entry key="D1" value="69.91876761852731" />
-      <entry key="W1" value="70.84421636417095" />
+      <entry key="MS100" value="0.956314605046571" />
+      <entry key="MS500" value="1.4211243870654309" />
+      <entry key="S2" value="2.721971824357114" />
+      <entry key="S5" value="4.114631075365702" />
+      <entry key="S10" value="5.874861979254127" />
+      <entry key="S30" value="9.439266088548028" />
+      <entry key="S60" value="12.10259203055842" />
+      <entry key="M2" value="15.8696241255205" />
+      <entry key="M5" value="21.943463269393586" />
+      <entry key="M10" value="27.94398600413927" />
+      <entry key="M15" value="33.842984015203655" />
+      <entry key="M30" value="47.77973189073547" />
+      <entry key="H1" value="61.52889380569269" />
+      <entry key="H2" value="71.37697512385122" />
+      <entry key="H4" value="77.29549744880413" />
+      <entry key="D1" value="82.82357927018545" />
+      <entry key="W1" value="83.8304334784529" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
@@ -167,7 +166,15 @@
       <option name="project" value="LOCAL" />
       <updated>1782812062586</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="changing the file">
+      <option name="closed" value="true" />
+      <created>1782812229801</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1782812229801</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -177,6 +184,7 @@
     <MESSAGE value="new commits" />
     <MESSAGE value="make changes" />
     <MESSAGE value="making changes in files" />
-    <option name="LAST_COMMIT_MESSAGE" value="making changes in files" />
+    <MESSAGE value="changing the file" />
+    <option name="LAST_COMMIT_MESSAGE" value="changing the file" />
   </component>
 </project>
