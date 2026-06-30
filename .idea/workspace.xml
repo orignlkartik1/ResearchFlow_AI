@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="new commits">
-      <change beforePath="$PROJECT_DIR$/my_agent/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/agent.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/prompt.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/prompt.py" afterDir="false" />
+    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="making changes in files">
+      <change beforePath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/agent.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/prompt.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/prompt.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,23 +42,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.006274730148974" />
-      <entry key="MS500" value="1.5317373309749234" />
-      <entry key="S2" value="2.4179504387207613" />
-      <entry key="S5" value="2.7411136448197713" />
-      <entry key="S10" value="2.865746057274964" />
-      <entry key="S30" value="2.95413220158275" />
-      <entry key="S60" value="2.9769234668114626" />
-      <entry key="M2" value="2.9887457863171147" />
-      <entry key="M5" value="3.4054735994801306" />
-      <entry key="M10" value="7.623130762997003" />
-      <entry key="M15" value="13.408741704016792" />
-      <entry key="M30" value="26.46909951577659" />
-      <entry key="H1" value="38.2614558941183" />
-      <entry key="H2" value="46.228143351178296" />
-      <entry key="H4" value="50.864757521299225" />
-      <entry key="D1" value="55.10728647344936" />
-      <entry key="W1" value="55.871536956460446" />
+      <entry key="MS100" value="1.0054918948362856" />
+      <entry key="MS500" value="1.4510697839844435" />
+      <entry key="S2" value="2.7927952218182437" />
+      <entry key="S5" value="4.4220850059032575" />
+      <entry key="S10" value="5.728784069347011" />
+      <entry key="S30" value="7.201476785687092" />
+      <entry key="S60" value="8.417118340235339" />
+      <entry key="M2" value="10.50598841741306" />
+      <entry key="M5" value="13.848121966797489" />
+      <entry key="M10" value="18.412438912313437" />
+      <entry key="M15" value="23.88394695511247" />
+      <entry key="M30" value="37.173540804454184" />
+      <entry key="H1" value="50.15470803060388" />
+      <entry key="H2" value="59.34261869410988" />
+      <entry key="H4" value="64.82405316288137" />
+      <entry key="D1" value="69.91877445064905" />
+      <entry key="W1" value="70.84421735331775" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -80,23 +80,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.8824511811785962" />
-      <entry key="MS500" value="1.4961025442045728" />
-      <entry key="S2" value="2.4042651233637127" />
-      <entry key="S5" value="2.734911843845119" />
-      <entry key="S10" value="2.862503297036695" />
-      <entry key="S30" value="2.953017592275994" />
-      <entry key="S60" value="2.976361808655533" />
-      <entry key="M2" value="2.9884638152866265" />
-      <entry key="M5" value="3.4053458776025525" />
-      <entry key="M10" value="7.622999700370291" />
-      <entry key="M15" value="13.408595709062789" />
-      <entry key="M30" value="26.46896222360869" />
-      <entry key="H1" value="38.26135877165425" />
-      <entry key="H2" value="46.22808526244885" />
-      <entry key="H4" value="50.86472571764573" />
-      <entry key="D1" value="55.10728075327796" />
-      <entry key="W1" value="55.87153612851255" />
+      <entry key="MS100" value="0.9447183983175844" />
+      <entry key="MS500" value="1.4336386274417379" />
+      <entry key="S2" value="2.7840708924951922" />
+      <entry key="S5" value="4.4162792182796515" />
+      <entry key="S10" value="5.724943171238854" />
+      <entry key="S30" value="7.19984695172937" />
+      <entry key="S60" value="8.416168944219907" />
+      <entry key="M2" value="10.505393436301027" />
+      <entry key="M5" value="13.847797240995202" />
+      <entry key="M10" value="18.412207889423755" />
+      <entry key="M15" value="23.883737827891984" />
+      <entry key="M30" value="37.17337063815078" />
+      <entry key="H1" value="50.15459144147307" />
+      <entry key="H2" value="59.34254935054462" />
+      <entry key="H4" value="64.82401521051067" />
+      <entry key="D1" value="69.91876761852731" />
+      <entry key="W1" value="70.84421636417095" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
@@ -151,7 +151,23 @@
       <option name="project" value="LOCAL" />
       <updated>1782811664176</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="make changes">
+      <option name="closed" value="true" />
+      <created>1782811888096</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1782811888096</updated>
+    </task>
+    <task id="LOCAL-00003" summary="making changes in files">
+      <option name="closed" value="true" />
+      <created>1782812062586</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1782812062586</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -159,6 +175,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="new commits" />
-    <option name="LAST_COMMIT_MESSAGE" value="new commits" />
+    <MESSAGE value="make changes" />
+    <MESSAGE value="making changes in files" />
+    <option name="LAST_COMMIT_MESSAGE" value="making changes in files" />
   </component>
 </project>
