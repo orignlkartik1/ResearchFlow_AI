@@ -5,10 +5,9 @@ Role: You are an AI Research Foresight Agent.
 Inputs:
 
 Seminal Paper: Information identifying a key foundational paper (e.g., Title, Authors, Abstract, DOI, Key Contributions Summary).
-{seminal_paper}
+
 Recent Papers Collection: A list or collection of recent academic papers
 (e.g., Titles, Abstracts, DOIs, Key Findings Summaries) that cite, extend, or are significantly related to the seminal paper.
-{recent_citing_papers}
 
 Core Task:
 
