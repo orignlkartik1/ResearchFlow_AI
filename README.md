@@ -1,49 +1,69 @@
 # ResearchFlow AI
 
-ResearchFlow AI is a multi-agent academic research assistant built around Google ADK agents. It helps a user analyze a seminal academic paper, find recent papers that cite or extend it, and generate insights about future research directions.
+ResearchFlow AI is a multi-agent academic research assistant built around Google ADK agents with a FastAPI backend and Telegram bot interface. It helps a user analyze a seminal academic paper, find recent papers that cite or extend it, and generate future research directions.
 
 **For detailed project specifications and requirements, see the [SRS Document](./SRS.md).**
 
-The project currently focuses on an academic workflow:
+The project currently focuses on an integrated research workflow:
 
-1. collect or analyze a seminal paper
-2. extract its core context, references, keywords, and innovations
-3. search for recent citing papers
-4. synthesize gaps, trends, and promising future research areas
+1. Collect or analyze a seminal paper
+2. Extract its core context, references, keywords, and innovations
+3. Search for recent citing papers (current year and previous year)
+4. Synthesize gaps, trends, and promising future research areas
+5. Deliver results through Telegram bot or direct API access
 
 ## Project Structure
 
 ```text
 ReasearchFlow_AI/
 +-- my_agent/
-|   +-- agent.py
-|   +-- prompt.py
-|   +-- bot.py
+|   +-- __init__.py
+|   +-- agent.py                          # Coordinator agent definition
+|   +-- prompt.py                         # Coordinator prompt
+|   +-- env.py                            # Environment variable handling
+|   +-- backend/
+|   |   +-- main.py                       # FastAPI application
+|   |   +-- adk_runner.py                 # ADK agent runner & session management
+|   |   +-- telegram.py                   # Telegram bot handler
 |   +-- sub_agents/
 |       +-- academic_webresearch/
-|       |   +-- agent.py
-|       |   +-- prompt.py
+|       |   +-- agent.py                  # Web search sub-agent
+|       |   +-- prompt.py                 # Web search prompt
 |       +-- academic_newresearch/
-|           +-- agent.py
-|           +-- prompt.py
-+-- SRS.md
-+-- pyproject.toml
-+-- uv.lock
-+-- README.md
+|           +-- agent.py                  # Future research sub-agent
+|           +-- prompt.py                 # Future research prompt
++-- SRS.md                                # Detailed specifications
++-- README.md                             # This file
++-- pyproject.toml                        # Project metadata and dependencies
++-- uv.lock                               # Dependency lock file
 ```
 
 ## Main Components
 
-### Academic Coordinator
+### Academic Coordinator Agent
 
-`my_agent/agent.py` defines the root `academic_coordinator` agent.
+`my_agent/agent.py` defines the root `academic_coordinator` agent using Google ADK.
 
-The coordinator is responsible for managing the complete research workflow. It analyzes the seminal paper, calls the web research sub-agent to find recent citing papers, then calls the new research sub-agent to synthesize insights.
+The coordinator is responsible for managing the complete research workflow. It uses `gemini-2.5-flash` as the LLM and orchestrates sub-agents through the `AgentTool` wrapper. The coordinator:
+
+- Analyzes the seminal paper from user input
+- Invokes the web research sub-agent to find citing papers
+- Invokes the new research sub-agent to generate future directions
+- Compiles and presents findings to the user
 
 The exported `root_agent` points to this coordinator:
 
 ```python
-root_agent = academic_coordinator
+root_agent = Agent(
+    name="academic_coordinator",
+    model=MODEL,
+    description="Analyzes seminal papers...",
+    instruction=prompt.ACADEMIC_COORDINATOR_PROMPT,
+    tools=[
+        AgentTool(agent=academic_websearch_agent),
+        AgentTool(agent=academic_newresearch_agent),
+    ],
+)
 ```
 
 ### Coordinator Prompt
@@ -52,29 +72,62 @@ root_agent = academic_coordinator
 
 This prompt defines the end-to-end interaction flow:
 
-- ask the user for a seminal paper
-- extract paper metadata, abstract, summary, keywords, innovations, and references
-- invoke the academic web search tool
-- invoke the future research synthesis tool
-- present findings and suggestions clearly to the user
+- Greet the user and ask for a seminal paper
+- Extract paper metadata: title, authors, abstract, summary, keywords, innovations, and references
+- Invoke the academic web search tool to find recent citing papers
+- Invoke the future research synthesis tool based on findings
+- Present results clearly to the user
 
 ### Academic Web Research Sub-Agent
 
 `my_agent/sub_agents/academic_webresearch/` contains the `academic_websearch_agent`.
 
-This agent uses the Google ADK `google_search` tool to find recent papers that cite the provided seminal paper. Its prompt asks it to search for papers from the current year and previous year, verify results, and group them logically.
+This agent uses the Google ADK `google_search` tool to find recent papers that cite the provided seminal paper. Its prompt:
+
+- Searches for papers from the current year and previous year
+- Targets at least 10 distinct citing papers per year (20 minimum total)
+- Uses iterative search strategies with multiple query variations
+- Filters results for relevance and removes duplicates
+- Groups results by publication year
 
 ### Academic New Research Sub-Agent
 
 `my_agent/sub_agents/academic_newresearch/` contains the `academic_newresearch_agent`.
 
-This agent takes the seminal paper context and the recent citing papers, then synthesizes at least 10 future research areas. Each suggestion includes a title and a short rationale explaining novel directions and research gaps.
+This agent takes the seminal paper context and the recent citing papers, then synthesizes:
+
+- At least 10 future research areas
+- Each with title, rationale, and novelty assessment
+- Diversity across utility, unexpectedness, and emerging popularity
+- Optional identification of relevant authors from the input papers
+
+### FastAPI Backend
+
+`my_agent/backend/main.py` contains the FastAPI application with a `/chat` endpoint.
+
+- Accepts POST requests with `user_id` and `message`
+- Routes requests to the ADK runner for agent processing
+- Returns JSON response with agent findings
+- Handles concurrent user requests asynchronously
+
+### ADK Runner
+
+`my_agent/backend/adk_runner.py` manages agent execution and session state.
+
+- Creates and maintains in-memory sessions per user
+- Uses Google ADK's `Runner` and `InMemorySessionService`
+- Implements `ask_agent(user_id, message)` function for backend integration
+- Extracts final response text from agent events
 
 ### Telegram Bot Entry Point
 
-`my_agent/bot.py` contains a basic Aiogram Telegram bot skeleton. It currently registers a `/start` command and starts polling with the `BOT_TOKEN` environment variable.
+`my_agent/backend/telegram.py` contains the Telegram bot using python-telegram-bot.
 
-This bot is separate from the ADK coordinator flow in its current form. It can be extended later to call the academic coordinator agent from Telegram messages.
+- Registers `/start` command with greeting
+- Handles text messages and forwards them to the FastAPI backend via HTTP
+- Uses async `httpx.AsyncClient` for non-blocking requests
+- Displays agent responses back to the user
+- Implements proper async/await patterns for polling
 
 ## Requirements
 
@@ -83,15 +136,23 @@ The project metadata is defined in `pyproject.toml`.
 Current declared requirements:
 
 - Python `>=3.14`
-- `aiogram>=3.29.0`
+- `aiogram>=3.29.0` (alternative bot framework option)
+- `fastapi>=0.139.0`
+- `google-adk==2.3.0`
+- `httpx>=0.28.1` (async HTTP client)
+- `python-dotenv>=1.2.2`
+- `python-telegram-bot>=22.8`
+- `uvicorn>=0.51.0`
 
-The source code also imports Google ADK modules such as:
+The source code imports Google ADK modules such as:
 
-- `google.adk`
 - `google.adk.agents`
 - `google.adk.tools`
+- `google.adk.runners`
+- `google.adk.sessions`
+- `google.genai.types`
 
-Make sure the Google ADK package required by your environment is installed, even though it is not currently listed in `pyproject.toml`.
+Make sure the Google ADK package required by your environment is installed.
 
 ## Setup
 
@@ -103,41 +164,61 @@ uv sync
 
 If you are not using `uv`, create a virtual environment and install the dependencies from `pyproject.toml` with your preferred Python package manager.
 
-Environment variables you may need:
+Environment variables you need to configure:
 
-```text
-BOT_TOKEN=your_telegram_bot_token
+```bash
+# Required for Google ADK agents
+GOOGLE_API_KEY=your_google_adk_api_key
+
+# Required for Telegram bot
+TELEGRAM_TOKEN=your_telegram_bot_token
 ```
 
-Google ADK and Gemini usage may also require provider-specific credentials depending on your local ADK configuration.
+Place these in a `.env` file in the `my_agent/` directory or export them in your shell environment.
 
 ## Running
 
-### Run The Telegram Bot
+### Run FastAPI Backend
 
 ```bash
-python -m my_agent.bot
+python -m uvicorn my_agent.backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-The bot will start polling Telegram using `BOT_TOKEN`.
+The backend will start on `http://127.0.0.1:8000/` with the `/chat` endpoint available.
 
-### Run With Google ADK
+### Run Telegram Bot
+
+```bash
+python -m my_agent.backend.telegram
+```
+
+The bot will connect to Telegram and start polling for messages. It will forward messages to the backend at `http://127.0.0.1:8000/chat`.
+
+### Run With Google ADK CLI (Alternative)
 
 The root agent is exposed as `root_agent` in `my_agent/agent.py`, which is the common structure expected by ADK tooling.
 
-Depending on your installed ADK CLI and configuration, run or inspect the agent from the project root using the ADK command appropriate for your environment.
+Depending on your installed ADK CLI and configuration, run the agent from the project root:
+
+```bash
+adk run --agent my_agent.agent:root_agent
+```
 
 ## Workflow
 
 The intended ResearchFlow AI workflow is:
 
-1. User provides a seminal academic paper, ideally as a PDF or identifiable paper metadata.
-2. The coordinator extracts the paper's title, authors, abstract, summary, keywords, innovations, and references.
-3. The coordinator calls `academic_websearch_agent`.
-4. The web research agent searches for recent papers citing the seminal paper and returns grouped results.
-5. The coordinator calls `academic_newresearch_agent`.
-6. The new research agent generates future research areas based on the seminal paper and recent citing papers.
-7. The coordinator presents the recent papers and future research directions to the user.
+1. User sends a message to Telegram bot (e.g., paper title or query)
+2. Telegram bot forwards the message to FastAPI backend via HTTP POST to `/chat`
+3. Backend creates a session for the user (if new) and calls the ADK runner
+4. Coordinator agent analyzes the seminal paper for context
+5. Coordinator calls `academic_websearch_agent` via AgentTool
+6. Web research agent searches for recent citing papers using Google Search tool
+7. Coordinator calls `academic_newresearch_agent` via AgentTool
+8. New research agent generates future research directions
+9. Coordinator compiles findings and returns response to backend
+10. Backend returns JSON response to Telegram bot
+11. Telegram bot displays the research findings to the user
 
 ## Contributing
 
@@ -167,41 +248,57 @@ We welcome contributions! Here are some tips for getting started:
    - Add new sub-agents in `my_agent/sub_agents/` following existing patterns
    - Test agent workflows end-to-end before submitting
 
-5. **Documentation**
+5. **Backend Development**
+   - Keep FastAPI routes simple and focused
+   - Use async/await patterns consistently
+   - Test concurrent requests
+   - Document API endpoints
+
+6. **Telegram Bot Enhancement**
+   - Use async handlers and non-blocking HTTP calls
+   - Handle error cases gracefully
+   - Test with actual Telegram Bot API before submitting
+
+7. **Documentation**
    - Update README.md if adding user-facing features
    - Update SRS.md if changing requirements or adding significant features
    - Include clear commit messages describing your changes
 
-6. **Pull Request Process**
+8. **Pull Request Process**
    - Link related issues in your PR description
    - Provide clear explanation of what your PR does and why
    - Ensure all changes are tested
    - Be responsive to feedback and review comments
 
-7. **Areas for Contribution**
-   - **Telegram Bot Integration**: Connect bot to academic coordinator workflow
-   - **AI Agents Stack**: Implement advanced reasoning patterns (ReAct, Chain-of-Thought)
-   - **Paper Analysis**: Enhance metadata extraction and document parsing
-   - **Testing**: Add unit and integration tests
+9. **Areas for Contribution**
+   - **Backend Enhancements**: Database persistence, caching, monitoring
+   - **AI Agents Stack**: Advanced reasoning patterns (ReAct, Chain-of-Thought), memory systems
+   - **Paper Analysis**: Enhanced metadata extraction, document parsing
+   - **Testing**: Unit and integration tests for agents and backend
    - **Documentation**: Improve code comments and user guides
+   - **Bot Features**: File uploads, inline search, conversation history
+   - **Performance**: Optimization and scaling
 
 ## Future Enhancements
 
 ResearchFlow AI is actively evolving. Key planned improvements include:
 
-- **Telegram Bot Full Integration**: Seamless message routing to research workflows
-- **Advanced AI Agents Stack**: ReAct pattern, Chain-of-Thought, agent memory, specialized sub-agents
-- **Citation Network Visualization**: Interactive graph exploration
-- **Web Dashboard**: User-friendly interface for research exploration
-- **Database Backend**: PostgreSQL/MongoDB for scalable paper storage
+- **Full Telegram Integration**: Seamless message routing between Telegram and research workflows
+- **Advanced AI Agents**: ReAct pattern, Chain-of-Thought reasoning, agent memory systems
+- **Database Backend**: Replace in-memory sessions with PostgreSQL/MongoDB for persistence
+- **Citation Network Visualization**: Interactive graph exploration and trend analysis
+- **Web Dashboard**: User-friendly interface for research exploration and result visualization
+- **Enhanced Paper Analysis**: Table/figure extraction, methodology parsing, code repository discovery
+- **Collaborative Features**: Shared research projects, team annotations, export capabilities
 
 See the [SRS Document](./SRS.md) for detailed future enhancement plans.
 
 ## Notes
 
-- The web research sub-agent is responsible for retrieval.
-- The new research sub-agent is responsible for synthesis and forecasting.
+- The web research sub-agent is responsible for retrieval using Google Search.
+- The new research sub-agent is responsible for synthesis and future direction forecasting.
 - The coordinator owns the user-facing workflow and output formatting.
-- `bot.py` is currently a minimal Telegram bot and is not yet wired into the ADK agent workflow.
+- FastAPI backend (`backend/main.py`) is the central hub for session and agent management.
+- Telegram bot (`backend/telegram.py`) is the primary user interface, connecting via HTTP to the backend.
+- Sessions are stored in-memory and do not persist across server restarts (future: database backend).
 - The package name in `pyproject.toml` is currently `reasearchflow-ai`, matching the repository spelling.
-
