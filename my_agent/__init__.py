@@ -1,3 +1,6 @@
 
+from .env import load_environment
 
-from . import agent  # noqa: E402
+load_environment()
+
+from . import agent  # noqa: E402,F401
