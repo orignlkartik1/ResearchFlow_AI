@@ -9,7 +9,7 @@ from . import prompt
 from .sub_agents.academic_newresearch import academic_newresearch_agent
 from .sub_agents.academic_webresearch import academic_websearch_agent
 
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-3.5-flash"
 
 
 root_agent = Agent(
