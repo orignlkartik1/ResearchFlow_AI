@@ -7,7 +7,7 @@ from google.adk.tools import google_search
 
 from . import prompt
 
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-3.5-flash"
 
 
 academic_websearch_agent = Agent(
