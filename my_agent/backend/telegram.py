@@ -17,8 +17,6 @@ from my_agent.env import require_env
 # Environment Variables
 # --------------------------------------------------------------------
 
-require_env("GOOGLE_API_KEY")
-
 BOT_TOKEN = require_env("TELEGRAM_TOKEN")
 
 # Change this after deployment
