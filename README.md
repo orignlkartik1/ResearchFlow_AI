@@ -166,6 +166,17 @@ If you are not using `uv`, create a virtual environment and install the dependen
 
 Environment variables you need to configure:
 
+```text
+BOT_TOKEN=your_telegram_bot_token
+LLM_MODEL=gemini-3.5-flash
+LLM_MODEL_FALLBACKS=openai/gpt-4.1,anthropic/claude-sonnet-4-5,groq/llama-3.3-70b-versatile
+SEARCH_MODEL=gemini-3.5-flash
+SEARCH_MODEL_FALLBACKS=gemini-3.5-flash-lite
+```
+
+Google ADK, Gemini, and LiteLLM providers require provider-specific credentials depending on the models you configure. Add only the keys for the providers you use, such as `GOOGLE_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY`, or `DEEPSEEK_API_KEY`.
+
+The agent validates every configured model at startup. During a run, ResearchFlow AI automatically retries with the next configured model when the active provider returns transient demand errors such as quota exhaustion, rate limits, overload, timeouts, 429, or 503 responses. The web-search sub-agent must still use Gemini models because ADK's built-in `google_search` tool only supports Gemini-backed agents.
 ```bash
 # Required for Google ADK agents
 GOOGLE_API_KEY=your_google_adk_api_key
