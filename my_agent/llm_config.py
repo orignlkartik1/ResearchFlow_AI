@@ -7,8 +7,8 @@ from google.adk.utils.model_name_utils import is_gemini_model
 from .env import load_environment
 
 
-DEFAULT_LLM_MODEL = "gemini-2.5-flash"
-DEFAULT_SEARCH_MODEL = "gemini-2.5-flash"
+DEFAULT_LLM_MODEL = "gemini-2.5-flash-lite"
+DEFAULT_SEARCH_MODEL = "gemini-2.5-flash-lite"
 logger = logging.getLogger(__name__)
 RETRYABLE_ERROR_MARKERS = (
     "429",
