@@ -1,3 +1,9 @@
+from .telegram_messages import (
+    send_long_message,
+    safe_delete_message,
+    safe_edit_text,
+)
+
 import logging
 
 import httpx
@@ -95,6 +101,9 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             response = await client.post(
                 API,
                 json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                },
             )
 
         response.raise_for_status()
@@ -106,13 +115,32 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Sorry, I couldn't generate a response.",
         )
 
-        await processing_msg.edit_text(reply)
+        logger.info(
+            "Generated response length: %d characters",
+            len(reply),
+        )
+
+        try:
+            await safe_delete_message(processing_msg)
+
+            await send_long_message(
+                context.bot,
+                update.effective_chat.id,
+                reply,
+            )
+        except Exception:
+            logger.exception("Failed while sending Telegram response")
+
+            await update.message.reply_text(
+                "❌ Failed to send the response."
+            )
 
     except httpx.ReadTimeout:
 
         logger.exception("Backend timeout")
 
-        await processing_msg.edit_text(
+        await safe_edit_text(
+            processing_msg.edit_text,
             "⏳ The analysis is taking longer than expected.\n\n"
             "Please try again in a few moments."
         )
@@ -121,7 +149,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         logger.exception("Cannot connect to backend")
 
-        await processing_msg.edit_text(
+        await safe_edit_text(
+            processing_msg.edit_text,
             "❌ Unable to connect to ResearchFlow AI backend.\n\n"
             "Please try again later."
         )
@@ -130,7 +159,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         logger.exception("HTTP Error")
 
-        await processing_msg.edit_text(
+        await safe_edit_text(
+            processing_msg.edit_text,
             f"⚠️ Backend returned an error.\n\n"
             f"Status Code: {e.response.status_code}"
         )
@@ -139,7 +169,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         logger.exception("Unexpected Error")
 
-        await processing_msg.edit_text(
+        await safe_edit_text(
+            processing_msg.edit_text,
             "❌ An unexpected error occurred.\n\n"
             f"{str(e)}"
         )
