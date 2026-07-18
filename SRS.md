@@ -1,8 +1,8 @@
 # Software Requirements Specification (SRS)
 ## ResearchFlow AI
 
-**Document Version:** 2.0  
-**Date:** 2026-07-12  
+**Document Version:** 3.0  
+**Date:** 2026-07-18  
 **Project:** ResearchFlow AI - Academic Research Assistant  
 **Author:** orignlkartik1
 
@@ -11,7 +11,7 @@
 ## 1. Introduction
 
 ### 1.1 Purpose
-ResearchFlow AI is a multi-agent academic research assistant designed to help researchers analyze seminal papers, discover recent citing papers, and identify promising future research directions. The system integrates Google ADK agents with a FastAPI backend and Telegram bot interface to provide a complete research workflow experience.
+ResearchFlow AI is a multi-agent academic research assistant designed to help researchers analyze seminal papers, discover recent citing papers, and identify promising future research directions. The system leverages Google ADK's agent framework with advanced LLM capabilities to automate literature review, trend analysis, and research gap identification.
 
 ### 1.2 Scope
 The system provides:
@@ -22,6 +22,7 @@ The system provides:
 - FastAPI REST backend for agent communication
 - Telegram bot interface for user interaction via python-telegram-bot
 - Session-based conversation management with in-memory storage
+- Multi-turn conversation support with context preservation
 
 ### 1.3 Definitions, Acronyms, and Abbreviations
 - **ADK**: Agent Development Kit (Google)
@@ -31,6 +32,7 @@ The system provides:
 - **Seminal Paper**: Foundational academic publication in a research field
 - **FastAPI**: Modern Python web framework for building APIs
 - **Telegram Bot API**: Interface for creating Telegram bots
+- **AgentTool**: Wrapper enabling sub-agent composition in coordinator
 
 ---
 
@@ -42,6 +44,7 @@ ResearchFlow AI operates as:
 2. A FastAPI REST backend for managing chat sessions and agent runs
 3. A Telegram bot frontend using python-telegram-bot for user interaction
 4. A coordinated workflow system with specialized sub-agents
+5. An in-memory session management system for conversation context
 
 ### 2.2 Product Features
 1. **Academic Coordinator Agent** - Orchestrates the complete research workflow using gemini-2.5-flash
@@ -51,12 +54,14 @@ ResearchFlow AI operates as:
 5. **FastAPI Backend** - REST endpoint `/chat` for processing research queries with session management
 6. **Telegram Bot Interface** - `/start` command and message handling with HTTP client integration
 7. **Session Management** - In-memory session service for maintaining conversation context across requests
+8. **Multi-turn Conversations** - Support for continuous research dialogues and follow-up queries
 
 ### 2.3 User Classes and Characteristics
 - **Researchers**: Need to understand literature trends and gaps
 - **Students**: Seeking context for their thesis or dissertation
 - **Academics**: Exploring citation networks and research evolution
 - **Telegram Users**: Prefer conversational interface for research queries
+- **API Consumers**: Direct HTTP access to backend for integration
 
 ### 2.4 Operating Environment
 - **OS**: Platform-independent (Python 3.14+)
@@ -65,15 +70,17 @@ ResearchFlow AI operates as:
 - **Bot Framework**: python-telegram-bot (22.8+) with async support
 - **External Services**: Google ADK with gemini-2.5-flash, Google Search, Telegram Bot API
 - **Hardware**: Standard laptop/server with internet connectivity
+- **Deployment**: Localhost (8000) or cloud platforms supporting Python/FastAPI
 
 ### 2.5 Design and Implementation Constraints
 - Python 3.14+ required
 - Dependency on Google ADK 2.3.0 and gemini-2.5-flash model
 - Telegram Bot Token required for bot functionality
 - Google API Key required for ADK and Search integration
-- FastAPI backend must run on localhost:8000 (configurable)
+- FastAPI backend runs on localhost:8000 (configurable)
 - Telegram bot connects via HTTP client to backend
 - In-memory session storage (not persistent across restarts)
+- Limited to concurrent sessions based on available memory
 
 ---
 
@@ -86,6 +93,7 @@ ResearchFlow AI operates as:
 - **Req F1.2**: System shall extract paper title, authors, abstract, and summary
 - **Req F1.3**: System shall identify key keywords and innovations from papers
 - **Req F1.4**: System shall extract and list paper references
+- **Req F1.5**: System shall support multiple input formats (title, authors, full paper metadata)
 
 #### 3.1.2 Web Research
 - **Req F2.1**: System shall search for papers citing the seminal paper using Google Search
@@ -107,6 +115,7 @@ ResearchFlow AI operates as:
 - **Req F4.3**: System shall maintain conversation context across multiple messages
 - **Req F4.4**: System shall return structured JSON response with research findings
 - **Req F4.5**: System shall handle concurrent requests from multiple users
+- **Req F4.6**: System shall support multi-turn conversations with context preservation
 
 #### 3.1.5 Telegram Bot Interface
 - **Req F5.1**: Telegram bot shall register `/start` command and reply with greeting
@@ -114,12 +123,14 @@ ResearchFlow AI operates as:
 - **Req F5.3**: Telegram bot shall receive research findings and display to user
 - **Req F5.4**: Bot shall handle errors gracefully with informative messages
 - **Req F5.5**: Bot shall use async HTTP client for non-blocking backend calls
+- **Req F5.6**: Bot shall support message editing and deletion for conversation management
 
 #### 3.1.6 Agent Orchestration
 - **Req F6.1**: Coordinator agent shall manage workflow execution using gemini-2.5-flash
 - **Req F6.2**: Sub-agents shall operate independently and be composable via AgentTool
 - **Req F6.3**: System shall handle agent failures and provide error messages
 - **Req F6.4**: System shall log all agent activities for debugging
+- **Req F6.5**: System shall support dynamic tool invocation and error recovery
 
 ### 3.2 Non-Functional Requirements
 
@@ -128,33 +139,39 @@ ResearchFlow AI operates as:
 - **Req NF1.2**: Web research shall return results within 60 seconds
 - **Req NF1.3**: System shall handle concurrent requests from multiple users
 - **Req NF1.4**: Backend API response time shall be under 2 seconds for simple queries
+- **Req NF1.5**: Telegram bot shall respond within 5 seconds of user message
 
 #### 3.2.2 Reliability
 - **Req NF2.1**: System uptime goal: 99% during operational hours
 - **Req NF2.2**: System shall gracefully handle API failures (Google Search, ADK timeout)
 - **Req NF2.3**: System shall implement retry logic for transient failures
 - **Req NF2.4**: Telegram bot shall reconnect automatically on connection loss
+- **Req NF2.5**: System shall preserve session data during temporary backend restarts
 
 #### 3.2.3 Scalability
 - **Req NF3.1**: System shall support concurrent research workflows (multiple users)
 - **Req NF3.2**: In-memory session storage shall support at least 100 concurrent sessions
 - **Req NF3.3**: Agent system shall distribute workload across coordinator and sub-agents
+- **Req NF3.4**: System shall handle queue management for high-load scenarios
 
 #### 3.2.4 Security
 - **Req NF4.1**: Bot tokens and API keys shall be stored as environment variables (`.env`)
 - **Req NF4.2**: System shall not expose credentials in logs or error messages
 - **Req NF4.3**: API calls shall use HTTPS for encryption
 - **Req NF4.4**: Sensitive environment variables: `TELEGRAM_TOKEN`, `GOOGLE_API_KEY`
+- **Req NF4.5**: System shall validate and sanitize all user inputs
 
 #### 3.2.5 Usability
 - **Req NF5.1**: Telegram interface shall be intuitive and require minimal setup
 - **Req NF5.2**: Error messages shall be clear and actionable
 - **Req NF5.3**: README shall provide setup, usage, and API documentation
+- **Req NF5.4**: Help command shall provide usage instructions
 
 #### 3.2.6 Maintainability
 - **Req NF6.1**: Code shall follow PEP 8 standards
 - **Req NF6.2**: Agents and backend components shall be modular and independently testable
 - **Req NF6.3**: Project shall include comprehensive documentation and docstrings
+- **Req NF6.4**: Code changes shall maintain backward compatibility
 
 ---
 
@@ -225,6 +242,7 @@ ADK Runner (adk_runner.py)
   ↓ ask_agent(user_id, message)
 Coordinator Agent (agent.py)
   ├─ Parse user query
+  ├─ Extract paper context
   ├─ Call academic_websearch_agent via AgentTool
   │  └─ Google Search Tool
   └─ Call academic_newresearch_agent via AgentTool
@@ -244,18 +262,21 @@ User (Telegram)
 - User research query (text message via Telegram)
 - Academic paper reference (title, authors, or PDF metadata)
 - Seminal paper identifier for web search
+- Follow-up queries and conversation context
 
 ### 5.2 Output Data
 - Extracted paper metadata and summary
 - List of citing papers with metadata (title, authors, year, source, link)
 - Future research suggestions with rationale
 - Summary report with findings
+- Session history and conversation context
 
 ### 5.3 Data Storage
-- **Configuration**: Environment variables (`.env` in `my_agent/backend/`)
+- **Configuration**: Environment variables (`.env` in `my_agent/` directory)
 - **Sessions**: In-memory session service (InMemorySessionService)
 - **Logs**: Console output (async logging in ADK Runner)
 - **Cache**: Session-based cache in memory
+- **Future**: PostgreSQL/MongoDB for persistent storage
 
 ---
 
@@ -271,6 +292,9 @@ Bot: Hello! I am ResearchFlow AI.
 User: Analyze the paper "Attention is All You Need" by Vaswani et al.
 Bot: [Coordinator analyzes paper and runs web/new research agents]
 Bot: [Returns findings with citing papers and future research directions]
+
+User: What are the latest trends in this field?
+Bot: [Uses conversation context to provide follow-up analysis]
 ```
 
 #### 6.1.2 Backend API Interface
@@ -412,6 +436,7 @@ See `pyproject.toml` for full dependency list with version constraints.
 - [ ] Telegram bot responds to `/start` command
 - [ ] FastAPI backend `/chat` endpoint processes requests correctly
 - [ ] Session management maintains context across multiple messages
+- [ ] Multi-turn conversations preserve context and support follow-up queries
 
 ### 9.2 Quality Criteria
 - [ ] All code follows PEP 8 standards
@@ -420,6 +445,7 @@ See `pyproject.toml` for full dependency list with version constraints.
 - [ ] README includes setup, usage, and API documentation
 - [ ] Response times meet performance requirements
 - [ ] Code is modular and easily testable
+- [ ] No credentials exposed in logs or error messages
 
 ### 9.3 Documentation
 - [ ] SRS document is complete and up-to-date
@@ -428,6 +454,7 @@ See `pyproject.toml` for full dependency list with version constraints.
 - [ ] Code comments explain complex logic
 - [ ] Contribution guidelines are documented
 - [ ] Setup instructions include environment variables
+- [ ] Architecture diagrams are clear and accurate
 
 ---
 
@@ -444,6 +471,7 @@ See `pyproject.toml` for full dependency list with version constraints.
 | **Session** | User conversation context maintained in memory or database |
 | **ADK Runner** | Google ADK component managing agent execution |
 | **AgentTool** | Wrapper enabling sub-agent composition in coordinator |
+| **Context** | Information preserved across multiple conversation turns |
 
 ---
 
@@ -453,6 +481,7 @@ See `pyproject.toml` for full dependency list with version constraints.
 |---------|------|--------|---------|
 | 1.0 | 2026-07-09 | orignlkartik1 | Initial SRS document creation |
 | 2.0 | 2026-07-12 | orignlkartik1 | Updated with backend implementation, FastAPI, session management, and current architecture |
+| 3.0 | 2026-07-18 | orignlkartik1 | Enhanced documentation: Multi-turn conversation support, improved acceptance criteria, expanded future enhancements, clarified technology stack |
 
 ---
 
