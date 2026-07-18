@@ -4,15 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="file changes">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/backend/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/backend/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/backend/telegram.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/backend/telegram.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/llm_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/llm_config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/prompt.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/prompt.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/prompt.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/sub_agents/academic_newresearch/prompt.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/sub_agents/academic_webresearch/prompt.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/sub_agents/academic_webresearch/prompt.py" afterDir="false" />
-    </list>
+    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="file changes" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
