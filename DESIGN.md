@@ -2,7 +2,7 @@
 
 ## Product Goal
 
-ResearchFlow AI reduces the manual effort of early academic literature exploration. A user should be able to provide a paper title, citation, abstract, metadata, or research prompt and receive a structured research response containing paper context, recent citing work, and potential future research directions.
+ResearchFlow AI reduces the manual effort of early academic literature exploration. A user should be able to provide a paper title, citation, abstract, metadata, research prompt, or text-based PDF and receive a structured research response containing paper context, recent citing work, and potential future research directions.
 
 ## Design Document Map
 
@@ -15,7 +15,7 @@ ResearchFlow AI reduces the manual effort of early academic literature explorati
 
 The primary interaction is conversational:
 
-1. The user submits a research request through Telegram or `POST /chat`.
+1. The user submits a research request through Telegram or `POST /chat`, or uploads a PDF through `POST /api/analyze-pdf`.
 2. The coordinator agent determines what paper context can be inferred from the request.
 3. The coordinator asks the web research sub-agent to search for recent citing or related papers.
 4. The coordinator asks the future research sub-agent to synthesize potential research directions.
@@ -62,6 +62,8 @@ The direct chat API intentionally keeps a minimal contract:
 
 The Telegram webhook endpoint accepts raw Telegram update JSON and delegates processing to the Telegram application in a FastAPI background task. Optional webhook secret validation is controlled by environment configuration.
 
+`POST /api/analyze-pdf` accepts one PDF in the multipart `file` field. The backend extracts page-labeled text in memory, enforces size/page/text limits, and calls the same `ask_agent()` function used by `/chat`. Its temporary ADK session is deleted after the request; the uploaded file is not permanently stored.
+
 ## Telegram Runtime Design
 
 Webhook mode is the intended runtime design:
@@ -80,7 +82,8 @@ Runtime configuration is environment-based. `my_agent/.env` is loaded through `p
 Required:
 
 - `GOOGLE_API_KEY`
-- `TELEGRAM_TOKEN`
+
+`TELEGRAM_TOKEN` is required only when Telegram integration is enabled.
 
 Optional:
 
@@ -96,12 +99,12 @@ The current code uses fixed `gemini-2.5-flash` model declarations in the coordin
 - The session ID is the same as `user_id`, which gives one active conversation context per user per process.
 - Webhook mode is better suited to deployment than polling.
 - Search depends on general Google Search results through ADK rather than direct scholarly database APIs.
-- Direct PDF parsing is not implemented yet, despite being part of the product direction.
+- OCR is not supported for scanned/image-only PDFs.
 
 ## Future Design Direction
 
 - Add persistent sessions and user-level history.
-- Add direct PDF/document ingestion.
+- Add OCR for scanned PDF/document uploads.
 - Add scholarly database integrations.
 - Add structured result export.
 - Add citation graph exploration.

@@ -7,12 +7,14 @@ Detailed requirements and design notes are maintained in [SRS.md](./SRS.md), [DE
 ## Current Capabilities
 
 1. Accept research requests through `POST /chat`.
-2. Accept Telegram updates through `POST /telegram/webhook`.
-3. Run a Google ADK coordinator agent with two specialist sub-agents.
-4. Search the web for recent academic work using the ADK Google Search tool.
-5. Generate future research directions from the seminal paper context and recent papers.
-6. Preserve per-user conversation context in memory while the backend process is running.
-7. Split long Telegram responses and send extremely large responses as text attachments.
+2. Expose `GET /health` for a basic service health check.
+3. Analyze text-based research PDFs through `POST /api/analyze-pdf`.
+4. Accept Telegram updates through `POST /telegram/webhook` when Telegram is enabled.
+5. Run a Google ADK coordinator agent with two specialist sub-agents.
+6. Search the web for recent academic work using the ADK Google Search tool.
+7. Generate future research directions from the seminal paper context and recent papers.
+8. Preserve per-user conversation context in memory while the backend process is running.
+9. Split long Telegram responses and send extremely large responses as text attachments.
 
 ## Project Structure
 
@@ -29,6 +31,8 @@ ResearchFlow_AI/
 |   |   +-- adk_runner.py                 # ADK Runner and in-memory sessions
 |   |   +-- telegram.py                   # Telegram handlers and webhook helpers
 |   |   +-- telegram_messages.py          # Long-message split/send helpers
+|   |   +-- pdf/
+|   |       +-- extractor.py              # In-memory PDF validation and extraction
 |   +-- sub_agents/
 |       +-- academic_webresearch/
 |       |   +-- agent.py                  # Google Search-backed retrieval agent
@@ -49,12 +53,14 @@ ResearchFlow_AI/
 ## Architecture Summary
 
 ```text
-Telegram user or API client
+Telegram user, API client, or PDF upload
         |
         v
 FastAPI app: my_agent.backend.main
         |
         +-- /chat
+        +-- /api/analyze-pdf
+        +-- /health
         +-- /telegram/webhook
         |
         v
@@ -67,7 +73,7 @@ Coordinator agent: my_agent.agent
         +-- academic_newresearch_agent
 ```
 
-The FastAPI app initializes and starts the Telegram application during its lifespan. When `TELEGRAM_WEBHOOK_URL` is configured, startup also registers the Telegram webhook. Telegram message handling calls the ADK runner directly; it does not require a separate bot polling process in normal deployment.
+The FastAPI app initializes and starts Telegram during its lifespan only when Telegram is enabled. Telegram remains enabled by default when `TELEGRAM_TOKEN` is configured, preserving existing deployments; set `ENABLE_TELEGRAM=false` for a web-only deployment. Setting `ENABLE_TELEGRAM=true` without a token fails clearly at startup. When Telegram is enabled and `TELEGRAM_WEBHOOK_URL` is configured, startup registers the webhook. Telegram message handling calls the same ADK runner as `POST /chat`.
 
 ## Main Components
 
@@ -92,10 +98,12 @@ The coordinator owns the user-facing workflow and exposes two sub-agents through
 
 `my_agent/backend/main.py` exposes:
 
+- `GET /health` for a basic health check.
 - `POST /chat` for direct API usage.
+- `POST /api/analyze-pdf` for PDF upload and research analysis.
 - `POST /telegram/webhook` for Telegram updates.
 
-The app validates Telegram webhook secrets when `TELEGRAM_WEBHOOK_SECRET` is set, schedules Telegram update processing as a background task, and manages the Telegram application's startup and shutdown lifecycle.
+The app validates Telegram webhook secrets when `TELEGRAM_WEBHOOK_SECRET` is set, schedules Telegram update processing as a background task, and manages the optional Telegram application's startup and shutdown lifecycle. PDF uploads are extracted by `my_agent/backend/pdf/extractor.py` and sent through the shared ADK runner.
 
 ### ADK Runner
 
@@ -126,6 +134,7 @@ Current requirements include:
 - Python `>=3.13`
 - `fastapi`
 - `google-adk==2.3.0`
+- `pymupdf`
 - `pydantic`
 - `python-dotenv`
 - `python-telegram-bot`
@@ -145,7 +154,13 @@ Create `my_agent/.env` or provide equivalent process environment variables:
 
 ```text
 GOOGLE_API_KEY=your_google_api_key
-TELEGRAM_TOKEN=your_telegram_bot_token
+
+# Optional: set these to enable Telegram; omit them for web-only deployments.
+# TELEGRAM_TOKEN=your_telegram_bot_token
+# ENABLE_TELEGRAM=true
+
+# Alternatively, explicitly disable Telegram even when a token is configured.
+# ENABLE_TELEGRAM=false
 
 # Optional: production webhook registration and verification
 TELEGRAM_WEBHOOK_URL=https://your-domain.example/telegram/webhook
@@ -229,6 +244,35 @@ Success:
 
 Agent execution failures return `503` with a `detail` field.
 
+### `GET /health`
+
+Returns `{"status": "ok"}` when the application is serving requests.
+
+### `POST /api/analyze-pdf`
+
+Upload a PDF as `multipart/form-data` using the `file` field. The backend extracts text page by page and sends it to the same `ask_agent()` research path used by `/chat`; uploaded files are not permanently stored.
+
+```bash
+curl -X POST \
+  -F "file=@paper.pdf" \
+  http://localhost:8000/api/analyze-pdf
+```
+
+Successful response:
+
+```json
+{
+  "success": true,
+  "filename": "paper.pdf",
+  "page_count": 12,
+  "result": {
+    "response": "Research analysis..."
+  }
+}
+```
+
+The current limits are 15 MiB per upload, 100 pages, and 120,000 extracted text characters; at least 20 alphanumeric characters must be extractable. Files must have a `.pdf` filename and a valid PDF header/content; the provided MIME type is not trusted. Scanned/image-only PDFs without extractable text are rejected; OCR is not supported yet. Documents exceeding a limit receive an error rather than being silently truncated. PDF bytes and extracted text are processed in memory, and the per-request ADK session is deleted after analysis. AI credentials remain server-side.
+
 ### `POST /telegram/webhook`
 
 Accepts a Telegram update JSON payload and returns:
@@ -240,6 +284,7 @@ Accepts a Telegram update JSON payload and returns:
 ```
 
 Invalid JSON returns `400`. Invalid webhook secrets return `403` when webhook secret validation is enabled.
+The route returns `503` when Telegram integration is disabled.
 
 ## Development Notes
 
@@ -247,7 +292,7 @@ Invalid JSON returns `400`. Invalid webhook secrets return `403` when webhook se
 - The coordinator and both sub-agents currently use `gemini-2.5-flash`.
 - Session state is process-local and is lost on restart.
 - There is no persistent database yet.
-- Direct PDF ingestion is part of the intended product direction but is not implemented in the current code.
+- Scanned/image-only PDF OCR is not implemented.
 - Web research quality depends on Google Search results returned through the ADK tool.
 
 ## Documentation
@@ -261,7 +306,6 @@ Invalid JSON returns `400`. Invalid webhook secrets return `403` when webhook se
 ## Future Enhancements
 
 - Persistent sessions with Redis, PostgreSQL, or another shared store.
-- Direct PDF upload and parsing.
 - Scholarly database integrations.
 - Citation graph visualization.
 - Structured exports such as Markdown, JSON, BibTeX, or PDF.

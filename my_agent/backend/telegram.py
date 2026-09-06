@@ -19,8 +19,6 @@ from my_agent.backend.telegram_messages import (
 )
 from my_agent.env import require_env
 
-BOT_TOKEN = require_env("TELEGRAM_TOKEN")
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -37,7 +35,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Welcome to ResearchFlow AI!\n\n"
         "I can help you analyze research papers, discover recent work, "
         "and suggest future research directions.\n\n"
-        "Send me a message to begin."
+        "Send me a research paper file  to begin."
     )
 
 
@@ -101,27 +99,35 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
 
 
+telegram_app: Application | None = None
+
+
+def get_telegram_application() -> Application:
+    global telegram_app
+    if telegram_app is None:
+        telegram_app = create_telegram_application()
+    return telegram_app
+
+
 def create_telegram_application() -> Application:
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = Application.builder().token(require_env("TELEGRAM_TOKEN")).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
     return application
 
 
-telegram_app = create_telegram_application()
-
-
 async def process_telegram_update(payload: dict) -> None:
-    update = Update.de_json(payload, telegram_app.bot)
+    application = get_telegram_application()
+    update = Update.de_json(payload, application.bot)
     if update is None:
         logger.info("Ignoring invalid Telegram update payload")
         return
 
-    await telegram_app.process_update(update)
+    await application.process_update(update)
 
 
 async def set_telegram_webhook(webhook_url: str, secret_token: str | None = None) -> None:
-    await telegram_app.bot.set_webhook(
+    await get_telegram_application().bot.set_webhook(
         url=webhook_url,
         secret_token=secret_token,
         allowed_updates=Update.ALL_TYPES,
@@ -130,7 +136,7 @@ async def set_telegram_webhook(webhook_url: str, secret_token: str | None = None
 
 
 async def delete_telegram_webhook() -> None:
-    await telegram_app.bot.delete_webhook(drop_pending_updates=True)
+    await get_telegram_application().bot.delete_webhook(drop_pending_updates=True)
 
 
 if __name__ == "__main__":
@@ -141,4 +147,4 @@ if __name__ == "__main__":
         )
 
     logger.info("Starting ResearchFlow AI Telegram bot with temporary long polling")
-    telegram_app.run_polling()
+    get_telegram_application().run_polling()

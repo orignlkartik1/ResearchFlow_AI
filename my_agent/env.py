@@ -23,3 +23,19 @@ def require_env(name: str) -> str:
             f"{name} is not set. Expected it in {ENV_PATH} or in the process environment."
         )
     return value
+
+
+def is_telegram_enabled() -> bool:
+    load_environment()
+    configured = os.environ.get("ENABLE_TELEGRAM")
+    if configured is None:
+        return bool(os.environ.get("TELEGRAM_TOKEN"))
+
+    normalized = configured.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise RuntimeError(
+        "ENABLE_TELEGRAM must be a boolean value: true/false, yes/no, on/off, or 1/0."
+    )

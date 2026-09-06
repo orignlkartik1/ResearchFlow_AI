@@ -10,12 +10,13 @@ This Low-Level Design describes the concrete modules, functions, data contracts,
 
 | Module | Primary Items | Responsibility |
 |--------|---------------|----------------|
-| `my_agent/env.py` | `ENV_PATH`, `load_environment`, `require_env` | Loads `my_agent/.env` once and validates required environment variables |
+| `my_agent/env.py` | `ENV_PATH`, `load_environment`, `require_env`, `is_telegram_enabled` | Loads `my_agent/.env`, validates required values, and resolves Telegram activation |
 | `my_agent/agent.py` | `root_agent` | Defines the root ADK coordinator and wires sub-agents through `AgentTool` |
 | `my_agent/prompt.py` | `ACADEMIC_COORDINATOR_PROMPT` | Defines the coordinator workflow and output expectations |
-| `my_agent/backend/main.py` | `app`, `lifespan`, `ChatRequest`, `chat`, `telegram_webhook` | Defines FastAPI lifecycle and HTTP routes |
-| `my_agent/backend/adk_runner.py` | `APP_NAME`, `session_service`, `_ensure_session`, `_run_once`, `ask_agent` | Runs ADK agents and manages process-local sessions |
-| `my_agent/backend/telegram.py` | `start`, `chat`, `create_telegram_application`, `process_telegram_update`, `set_telegram_webhook`, `delete_telegram_webhook` | Handles Telegram commands, messages, webhook setup, and debug polling |
+| `my_agent/backend/main.py` | `app`, `lifespan`, `ChatRequest`, `health`, `chat`, `analyze_pdf`, `telegram_webhook` | Defines FastAPI lifecycle and HTTP routes |
+| `my_agent/backend/adk_runner.py` | `APP_NAME`, `session_service`, `_ensure_session`, `_run_once`, `ask_agent`, `discard_agent_session` | Runs ADK agents and manages process-local sessions |
+| `my_agent/backend/pdf/extractor.py` | `extract_pdf`, `ExtractedDocument`, `ExtractedPage` | Validates in-memory PDF bytes, extracts page text, and enforces document limits |
+| `my_agent/backend/telegram.py` | `start`, `chat`, `get_telegram_application`, `create_telegram_application`, `process_telegram_update`, `set_telegram_webhook`, `delete_telegram_webhook` | Lazily creates the Telegram application and handles commands, messages, webhooks, and debug polling |
 | `my_agent/backend/telegram_messages.py` | `split_telegram_message`, `send_long_message`, `reply_long_text`, `safe_delete_message`, `safe_edit_text` | Handles Telegram message limits and send/edit/delete failures |
 | `my_agent/sub_agents/academic_webresearch/agent.py` | `academic_websearch_agent` | Defines the retrieval sub-agent using `google_search` |
 | `my_agent/sub_agents/academic_webresearch/prompt.py` | `ACADEMIC_WEBSEARCH_PROMPT` | Defines recent citing-paper search behavior |
@@ -60,23 +61,40 @@ Behavior:
 - Rejects invalid JSON with `400`.
 - Adds `process_telegram_update(payload)` as a FastAPI background task.
 - Returns `{"ok": true}` once the update is accepted for processing.
+- Returns `503` when Telegram integration is disabled.
+
+### 3.3 `GET /health`
+
+Returns `{"status": "ok"}` without exposing configuration or credentials.
+
+### 3.4 `POST /api/analyze-pdf`
+
+Input: multipart form field `file` containing a `.pdf` file with a valid PDF header.
+
+Processing flow:
+
+1. Read at most 15 MiB plus one byte from the upload.
+2. Validate PDF content and extract each page's text in memory.
+3. Reject documents over 100 pages or 120,000 extracted text characters.
+4. Reject documents with fewer than 20 extractable alphanumeric characters; scanned/image-only PDFs are not OCR-processed.
+5. Send page-labeled text to `ask_agent()` with a fresh, per-request user ID.
+6. Close the upload and return the analysis response and page count.
+
+Success includes `success`, `filename`, `page_count`, and `result.response`. Failures return a JSON `error` object with a stable code; model failures return `502` without provider details.
 
 ## 4. FastAPI Lifecycle
 
-`main.py` defines an async lifespan context manager:
+`main.py` defines an async lifespan context manager. It starts Telegram only when `is_telegram_enabled()` returns true:
 
 ```text
 lifespan
-    |
-    +-- telegram_app.initialize()
-    +-- telegram_app.start()
-    +-- optional set_telegram_webhook()
+    +-- enabled: create application, initialize, start, optionally register webhook
+    +-- disabled: log web-only mode
     +-- yield
-    +-- telegram_app.stop()
-    +-- telegram_app.shutdown()
+    +-- if enabled: stop and shut down Telegram
 ```
 
-`TELEGRAM_WEBHOOK_URL` controls automatic webhook registration. `TELEGRAM_WEBHOOK_SECRET` is passed to Telegram during webhook setup and is also used for request validation.
+`ENABLE_TELEGRAM` explicitly enables or disables Telegram (`true`/`false`, `yes`/`no`, `on`/`off`, or `1`/`0`). When unset, Telegram is enabled if `TELEGRAM_TOKEN` is configured, preserving existing deployments. Enabling Telegram without a token raises the actionable `require_env` error during startup. `TELEGRAM_WEBHOOK_URL` controls automatic webhook registration. `TELEGRAM_WEBHOOK_SECRET` is passed to Telegram during webhook setup and is also used for request validation.
 
 ## 5. Agent Construction
 
@@ -184,9 +202,15 @@ my_agent/.env
 
 `load_environment()` is idempotent and uses `override=False`, so process environment variables take precedence over `.env` values.
 
-`require_env(name)` raises `RuntimeError` when a required variable is missing. `telegram.py` requires `TELEGRAM_TOKEN` at import time.
+`require_env(name)` raises `RuntimeError` when a required variable is missing. `telegram.py` requires `TELEGRAM_TOKEN` only when creating the Telegram application, not when the FastAPI app or Telegram module is imported.
 
-## 11. Error Handling
+## 11. PDF Upload Handling
+
+`POST /api/analyze-pdf` keeps upload bytes in memory, checks the filename extension and PDF signature, and uses PyMuPDF to open and extract text. Per-page records are retained, including pages with no text, and page labels are included in the research prompt. The original upload is closed after processing and is not permanently stored.
+
+The upload cap is 15 MiB, the page cap is 100, and the extracted-text cap is 120,000 characters. Text is rejected at the cap rather than truncated. Image-only PDFs return `NO_EXTRACTABLE_TEXT`; OCR is not implemented. AI credentials are never returned in the API response.
+
+## 12. Error Handling
 
 | Area | Error | Handling |
 |------|-------|----------|
@@ -195,13 +219,17 @@ my_agent/.env
 | Agent execution failure | Exception from ADK runner | Logged and returned as `503` from `/chat` |
 | Invalid webhook secret | Secret mismatch | `HTTPException(403)` |
 | Invalid webhook JSON | JSON parsing failure | `HTTPException(400)` |
+| Invalid PDF | Invalid signature or malformed file | JSON `400` error |
+| No extractable PDF text | Image-only or nearly empty extracted text | JSON `422` error |
+| PDF size limit exceeded | Upload, page, or text cap | JSON `413` error |
+| PDF research failure | `ask_agent` failure | Generic JSON `502` error |
 | Telegram send/edit/delete failure | Telegram API or unexpected exception | Logged; bot continues |
 | Direct polling without opt-in | Missing `ENABLE_TELEGRAM_POLLING=1` | `RuntimeError` |
 
-## 12. Extension Points
+## 13. Extension Points
 
 - Add new sub-agents under `my_agent/sub_agents/` and expose them through `AgentTool`.
 - Replace `InMemorySessionService` with persistent session storage.
-- Add PDF parsing before the coordinator prompt is invoked.
+- Add OCR for scanned PDFs before the coordinator prompt is invoked.
 - Add authentication and rate limiting to FastAPI routes.
 - Add tests for `/chat`, webhook secret validation, long-message splitting, and ADK runner error behavior.

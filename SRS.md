@@ -2,8 +2,8 @@
 
 ## ResearchFlow AI
 
-**Document Version:** 4.2  
-**Date:** 2026-09-07  
+**Document Version:** 4.3
+**Date:** 2026-09-29
 **Project:** ResearchFlow AI - Academic Research Assistant  
 **Author:** orignlkartik1
 
@@ -18,7 +18,8 @@ ResearchFlow AI is a multi-agent assistant for academic literature exploration. 
 The current system includes:
 
 - Google ADK coordinator and sub-agent orchestration.
-- FastAPI backend with `/chat` and `/telegram/webhook`.
+- FastAPI backend with `/health`, `/chat`, `/api/analyze-pdf`, and `/telegram/webhook`.
+- In-memory PDF validation and page-by-page text extraction for text-based PDFs.
 - Telegram bot integration using `python-telegram-bot`.
 - Webhook-first Telegram runtime with optional local polling.
 - In-memory conversation sessions.
@@ -57,6 +58,7 @@ ResearchFlow AI is a Python service composed of:
 - Preserve context for follow-up questions while the process is running.
 - Protect Telegram webhook requests with an optional shared secret.
 - Deliver long Telegram responses without exceeding Telegram message limits.
+- Send extracted PDF research context through the existing `ask_agent()` path.
 
 ### 2.3 User Classes
 
@@ -78,9 +80,10 @@ ResearchFlow AI is a Python service composed of:
 ### 2.5 Constraints
 
 - Credentials must be provided through environment variables or `my_agent/.env`.
-- `TELEGRAM_TOKEN` is required by the Telegram module.
+- `TELEGRAM_TOKEN` is required only when Telegram integration is enabled.
 - In-memory sessions do not survive process restarts.
-- Direct PDF parsing is not implemented in the current code.
+- PDF uploads are limited to 15 MiB, 100 pages, and 120,000 extracted text characters.
+- OCR for scanned/image-only PDFs is not implemented.
 - Web research depends on the ADK Google Search tool and available public search results.
 
 ## 3. Functional Requirements
@@ -90,7 +93,7 @@ ResearchFlow AI is a Python service composed of:
 - **F1.1** The system shall accept paper titles, citations, abstracts, summaries, or paper metadata through user messages.
 - **F1.2** The coordinator shall extract title, authors, publication year, abstract, summary, keywords, innovations, and references when available.
 - **F1.3** The coordinator shall clearly state when required metadata cannot be determined from the provided input.
-- **F1.4** The system should support direct PDF ingestion in a future release.
+- **F1.4** PDF uploads shall be analyzed according to the PDF Analysis API requirements in F7.
 
 ### 3.2 Web Research
 
@@ -136,9 +139,20 @@ ResearchFlow AI is a Python service composed of:
 - **F6.3** The webhook shall reject invalid JSON with `400`.
 - **F6.4** The webhook shall reject invalid secret tokens with `403` when `TELEGRAM_WEBHOOK_SECRET` is configured.
 - **F6.5** The webhook shall schedule update processing in a background task and return `{"ok": true}`.
-- **F6.6** FastAPI startup shall initialize and start the Telegram application.
-- **F6.7** FastAPI shutdown shall stop and shut down the Telegram application.
-- **F6.8** FastAPI startup shall register the Telegram webhook when `TELEGRAM_WEBHOOK_URL` is configured.
+- **F6.6** FastAPI startup shall initialize and start the Telegram application when Telegram integration is enabled.
+- **F6.7** FastAPI shutdown shall stop and shut down Telegram when it was started.
+- **F6.8** FastAPI startup shall register the Telegram webhook when Telegram is enabled and `TELEGRAM_WEBHOOK_URL` is configured.
+
+### 3.7 PDF Analysis API
+
+- **F7.1** The backend shall expose `POST /api/analyze-pdf` accepting a multipart `file` upload.
+- **F7.2** The endpoint shall validate the filename, PDF signature, PDF structure, and non-empty upload.
+- **F7.3** The endpoint shall extract text per page and preserve page boundaries in the research input.
+- **F7.4** The endpoint shall reject uploads over 15 MiB, documents over 100 pages, or extracted text over 120,000 characters without truncation.
+- **F7.5** The endpoint shall reject image-only or otherwise text-empty PDFs with a clear `NO_EXTRACTABLE_TEXT` error; OCR is out of scope.
+- **F7.6** The endpoint shall submit extracted text to the existing `ask_agent()` path and return its response with filename and page count.
+- **F7.7** The endpoint shall not permanently store uploaded PDFs and shall delete its temporary ADK session after analysis.
+- **F7.8** PDF processing and research failures shall return structured JSON errors without exposing credentials or internal tracebacks.
 
 ## 4. Non-Functional Requirements
 
@@ -224,6 +238,7 @@ Design detail is maintained in:
 - Configuration: process environment and `my_agent/.env`
 - Logs: application logger output
 - Temporary files: text attachments for extremely large Telegram responses
+- PDF uploads and extracted text: process memory only; temporary per-request ADK sessions are deleted after analysis
 - Persistent storage: not currently implemented
 
 ## 7. Interface Requirements
@@ -256,9 +271,17 @@ Success response:
 - Schedules update processing in a background task.
 - Returns `{"ok": true}`.
 
+### 7.3 PDF Analysis
+
+`POST /api/analyze-pdf` accepts multipart form data with a `file` field. Successful responses include `success`, `filename`, `page_count`, and `result.response`. Errors include a stable error `code` and safe user-facing `message`.
+
 ## 8. Acceptance Criteria
 
 - [ ] `/chat` accepts valid requests and returns a response.
+- [ ] `/health` returns `{"status":"ok"}`.
+- [ ] `/api/analyze-pdf` extracts text PDFs and preserves page boundaries in the agent input.
+- [ ] `/api/analyze-pdf` rejects empty, non-PDF, malformed, image-only, and oversized documents.
+- [ ] PDF analysis uses `ask_agent()` and removes its temporary ADK session.
 - [ ] Sessions are reused for repeated `user_id` values.
 - [ ] `/telegram/webhook` rejects invalid secrets when a secret is configured.
 - [ ] `/telegram/webhook` rejects invalid JSON.
@@ -274,7 +297,7 @@ Success response:
 ## 9. Future Enhancements
 
 - Persistent session storage with PostgreSQL, MongoDB, or Redis.
-- Direct PDF upload and parsing.
+- OCR for scanned PDFs.
 - Citation graph visualization.
 - Web dashboard for saved research projects.
 - Export to Markdown, PDF, JSON, and BibTeX.
@@ -292,3 +315,4 @@ Success response:
 | 4.0 | 2026-08-08 | orignlkartik1 | Aligned requirements with webhook mode, model fallback, and documentation set |
 | 4.1 | 2026-08-08 | orignlkartik1 | Added HLD and LLD references for complete design traceability |
 | 4.2 | 2026-09-07 | orignlkartik1 | Aligned requirements with current Telegram webhook implementation, ADK runner, and documentation updates |
+| 4.3 | 2026-09-29 | orignlkartik1 | Added bounded in-memory PDF analysis through the shared research path |

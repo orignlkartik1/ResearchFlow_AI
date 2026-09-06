@@ -68,3 +68,17 @@ async def ask_agent(user_id: str, message: str) -> str:
     except Exception as exc:
         logger.exception("ask_agent failed for user %s", user_id)
         raise RuntimeError(f"Agent execution failed: {exc}") from exc
+
+
+async def discard_agent_session(user_id: str) -> None:
+    """Remove a short-lived agent session after an API operation."""
+    session_id = user_id
+    if session_id not in _created_sessions:
+        return
+
+    await session_service.delete_session(
+        app_name=APP_NAME,
+        user_id=user_id,
+        session_id=session_id,
+    )
+    _created_sessions.discard(session_id)

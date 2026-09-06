@@ -8,10 +8,10 @@ This High-Level Design describes the major system components, responsibilities, 
 
 ## 2. System Context
 
-ResearchFlow AI accepts academic research requests through a direct HTTP API or a Telegram bot. It uses a Google ADK coordinator agent and two specialized sub-agents to analyze paper context, discover recent citing work, and generate future research directions.
+ResearchFlow AI accepts academic research requests through a direct HTTP API, text-based PDF upload, or a Telegram bot. It uses a Google ADK coordinator agent and two specialized sub-agents to analyze paper context, discover recent citing work, and generate future research directions.
 
 ```text
-User / API Client / Telegram
+User / API Client / PDF Upload / Telegram
         |
         v
 ResearchFlow AI FastAPI Backend
@@ -35,6 +35,7 @@ ResearchFlow AI FastAPI Backend
 | API and Lifecycle Layer |
 | - FastAPI app           |
 | - /chat                 |
+| - /api/analyze-pdf      |
 | - /telegram/webhook     |
 | - Telegram app startup  |
 +-----------+-------------+
@@ -44,6 +45,7 @@ ResearchFlow AI FastAPI Backend
 | Orchestration Layer     |
 | - ADK Runner            |
 | - In-memory sessions    |
+| - PDF session cleanup   |
 +-----------+-------------+
             |
             v
@@ -68,8 +70,10 @@ ResearchFlow AI FastAPI Backend
 | Layer | Component | Responsibility |
 |-------|-----------|----------------|
 | Interface | HTTP clients | Call `/chat` with a user ID and message |
+| Interface | PDF upload clients | Send PDFs to `/api/analyze-pdf` |
 | Interface | Telegram users | Send `/start` and text messages to the bot |
-| API | FastAPI app | Validates API requests, validates webhook secrets, manages Telegram lifecycle |
+| API | FastAPI app | Validates API/PDF requests, validates webhook secrets, manages optional Telegram lifecycle |
+| PDF | PDF extractor | Validates PDF files and extracts bounded, page-labeled text in memory |
 | Telegram | Telegram application | Parses updates, handles commands/messages, sends responses |
 | Orchestration | ADK runner | Creates sessions, executes the root agent, extracts final response text |
 | Agent | Coordinator | Owns the user-facing research workflow and invokes sub-agents |
@@ -100,6 +104,15 @@ ResearchFlow AI FastAPI Backend
 7. The handler calls `ask_agent` directly.
 8. The bot deletes or edits the processing message and sends the response, splitting long output when needed.
 
+### 5.3 PDF Analysis API
+
+1. A client uploads a `.pdf` file to `POST /api/analyze-pdf`.
+2. The backend enforces upload size, PDF content, page count, and extracted-text limits.
+3. PyMuPDF extracts text page by page; scanned/image-only documents without usable text are rejected.
+4. The page-labeled text is submitted to the shared `ask_agent()` research path.
+5. The unique in-memory ADK session is deleted after the analysis.
+6. The API returns the filename, page count, and agent response; the PDF is not permanently stored.
+
 ## 6. Deployment View
 
 The current target deployment is a single FastAPI application process served by Uvicorn.
@@ -108,7 +121,7 @@ The current target deployment is a single FastAPI application process served by 
 Uvicorn process
     |
     +-- FastAPI app
-    +-- Telegram application lifecycle
+    +-- Optional Telegram application lifecycle
     +-- Telegram webhook processing
     +-- In-memory ADK sessions
     +-- Agent execution
@@ -140,6 +153,7 @@ See [SECURITY.md](./SECURITY.md) for operational security guidance.
 
 - Sessions are not durable.
 - Multiple backend replicas would not share conversation context.
-- Direct PDF parsing is not implemented.
+- OCR is not available for scanned/image-only PDFs.
+- PDF uploads are limited to 15 MiB, 100 pages, and 120,000 extracted text characters.
 - There is no authentication or rate limiting for `/chat`.
 - Search quality depends on the ADK Google Search tool and public web results.

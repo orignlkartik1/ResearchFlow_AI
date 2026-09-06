@@ -4,7 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="file changes" />
+    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="file changes">
+      <change beforePath="$PROJECT_DIR$/.idea/ReasearchFlow_AI.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/researchflow-ai.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/ARCHITECTURE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DESIGN.md" beforeDir="false" afterPath="$PROJECT_DIR$/DESIGN.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HLD.md" beforeDir="false" afterPath="$PROJECT_DIR$/HLD.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LLD.md" beforeDir="false" afterPath="$PROJECT_DIR$/LLD.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SRS.md" beforeDir="false" afterPath="$PROJECT_DIR$/SRS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my_agent/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my_agent/backend/adk_runner.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/backend/adk_runner.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my_agent/backend/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/backend/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my_agent/backend/telegram.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/backend/telegram.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my_agent/env.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/uv.lock" beforeDir="false" afterPath="$PROJECT_DIR$/uv.lock" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -36,8 +53,8 @@
 }</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/orignlkartik1/ReasearchFlow_AI.git&quot;,
-    &quot;accountId&quot;: &quot;0e7aabc7-d1d8-4711-bd52-06a8861487d5&quot;
+    &quot;url&quot;: &quot;https://github.com/orignlkartik1/ResearchFlow_AI.git&quot;,
+    &quot;accountId&quot;: &quot;9f52195c-7810-4a8a-a7db-c77213a53fef&quot;
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
@@ -49,61 +66,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.433492529801917" />
-      <entry key="MS500" value="3.5042702634090928" />
-      <entry key="S2" value="9.01325719366985" />
-      <entry key="S5" value="16.548350040163545" />
-      <entry key="S10" value="24.017846666661868" />
-      <entry key="S30" value="43.94942733213613" />
-      <entry key="S60" value="59.48679962290255" />
-      <entry key="M2" value="72.19977960802774" />
-      <entry key="M5" value="90.80771924669887" />
-      <entry key="M10" value="120.01996110692167" />
-      <entry key="M15" value="150.879758306737" />
-      <entry key="M30" value="239.70959337836885" />
-      <entry key="H1" value="380.4215158340513" />
-      <entry key="H2" value="585.8578190347968" />
-      <entry key="H4" value="874.5290370075398" />
-      <entry key="D1" value="1521.8523096119375" />
-      <entry key="W1" value="1720.0482115711789" />
+      <entry key="MS100" value="1.0002188398713079" />
+      <entry key="MS500" value="1.5128651447650439" />
+      <entry key="S2" value="6.035678501337606" />
+      <entry key="S5" value="12.301628893928509" />
+      <entry key="S10" value="16.563731512803034" />
+      <entry key="S30" value="22.147209069775858" />
+      <entry key="S60" value="33.145210530173024" />
+      <entry key="M2" value="54.153239029152196" />
+      <entry key="M5" value="88.51071277650844" />
+      <entry key="M10" value="125.30106014506714" />
+      <entry key="M15" value="158.8122786430561" />
+      <entry key="M30" value="250.65058561032905" />
+      <entry key="H1" value="393.94441499869794" />
+      <entry key="H2" value="601.7476963721725" />
+      <entry key="H4" value="892.4609954242803" />
+      <entry key="D1" value="1544.0888095573148" />
+      <entry key="W1" value="1743.7633705765554" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="6.085577724419631E-237" />
-      <entry key="S10" value="1.0832265854903648E-118" />
-      <entry key="S30" value="8.394074076123704E-40" />
-      <entry key="S60" value="4.813697769923565E-20" />
-      <entry key="M2" value="3.7545096241851457E-10" />
-      <entry key="M5" value="3.4162324150555085E-4" />
-      <entry key="M10" value="0.03858241507321526" />
-      <entry key="M15" value="0.20751366181749042" />
-      <entry key="M30" value="1.3140043788965186" />
-      <entry key="H1" value="3.782058503332552" />
-      <entry key="H2" value="7.289269259833138" />
-      <entry key="H4" value="11.573006704970686" />
-      <entry key="D1" value="20.084129805569734" />
-      <entry key="W1" value="22.54600013959271" />
+      <entry key="S5" value="1.2393803399789528E-245" />
+      <entry key="S10" value="4.888444680402329E-123" />
+      <entry key="S30" value="2.9885229524961365E-41" />
+      <entry key="S60" value="9.082820228883378E-21" />
+      <entry key="M2" value="1.6308881286234537E-10" />
+      <entry key="M5" value="2.4473483430620705E-4" />
+      <entry key="M10" value="0.03265604597601333" />
+      <entry key="M15" value="0.18567901376586518" />
+      <entry key="M30" value="1.242953483420134" />
+      <entry key="H1" value="3.67838577271358" />
+      <entry key="H2" value="7.188669359614196" />
+      <entry key="H4" value="11.492869163262208" />
+      <entry key="D1" value="20.06088381145615" />
+      <entry key="W1" value="22.54227036918872" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.3679692952830647" />
-      <entry key="MS500" value="3.4724055384955546" />
-      <entry key="S2" value="8.992986890958651" />
-      <entry key="S5" value="16.53286948886832" />
-      <entry key="S10" value="24.006332878796552" />
-      <entry key="S30" value="43.94235517392002" />
-      <entry key="S60" value="59.4820031537666" />
-      <entry key="M2" value="72.19685869041932" />
-      <entry key="M5" value="90.80648092054831" />
-      <entry key="M10" value="120.05692000115833" />
-      <entry key="M15" value="151.08470213380923" />
-      <entry key="M30" value="241.01805004384838" />
-      <entry key="H1" value="384.19621795373695" />
-      <entry key="H2" value="593.1401900087902" />
-      <entry key="H4" value="886.0966544318538" />
-      <entry key="D1" value="1541.934902343486" />
-      <entry key="W1" value="1742.5939656425726" />
+      <entry key="MS100" value="0.9203898096284223" />
+      <entry key="MS500" value="1.4884162689517506" />
+      <entry key="S2" value="6.007777243140209" />
+      <entry key="S5" value="12.276092206605211" />
+      <entry key="S10" value="16.545800685696456" />
+      <entry key="S30" value="22.13820597958292" />
+      <entry key="S60" value="33.13726918031529" />
+      <entry key="M2" value="54.14645937251637" />
+      <entry key="M5" value="88.50672283535728" />
+      <entry key="M10" value="125.33058482269729" />
+      <entry key="M15" value="158.9944357683324" />
+      <entry key="M30" value="251.88765321245273" />
+      <entry key="H1" value="397.61531995605236" />
+      <entry key="H2" value="608.9293978194008" />
+      <entry key="H4" value="903.9484297579858" />
+      <entry key="D1" value="1564.14814419947" />
+      <entry key="W1" value="1766.3053929346515" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -133,12 +150,15 @@
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;python.packages.toolwindow.project.migrated.to.right.top.v2&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;editor.preferences.appearance&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
 }</component>
@@ -152,7 +172,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-50341a9f1f9c-c2ffad84badb-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-261.26222.68" />
+        <option value="bundled-python-sdk-eff1e8def5f5-5bd6d13a2a75-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-262.10315.174" />
       </set>
     </attachedChunks>
   </component>
@@ -163,6 +183,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1782808335170</updated>
+      <workItem from="1790700413205" duration="755000" />
+      <workItem from="1790701968432" duration="2281000" />
     </task>
     <task id="LOCAL-00001" summary="new commits">
       <option name="closed" value="true" />
