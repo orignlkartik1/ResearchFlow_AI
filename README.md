@@ -11,7 +11,7 @@ Detailed requirements and design notes are maintained in [SRS.md](./SRS.md), [DE
 3. Analyze text-based research PDFs through `POST /api/analyze-pdf`.
 4. Accept Telegram updates through `POST /telegram/webhook` when Telegram is enabled.
 5. Run a Google ADK coordinator agent with two specialist sub-agents.
-6. Search the web for recent academic work using the ADK Google Search tool.
+6. Search the web for recent academic work using the ADK Google Search tool
 7. Generate future research directions from the seminal paper context and recent papers.
 8. Preserve per-user conversation context in memory while the backend process is running.
 9. Split long Telegram responses and send extremely large responses as text attachments.
