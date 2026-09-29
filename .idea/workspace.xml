@@ -4,24 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="file changes">
-      <change beforePath="$PROJECT_DIR$/.idea/ReasearchFlow_AI.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/researchflow-ai.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/ARCHITECTURE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DESIGN.md" beforeDir="false" afterPath="$PROJECT_DIR$/DESIGN.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/HLD.md" beforeDir="false" afterPath="$PROJECT_DIR$/HLD.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LLD.md" beforeDir="false" afterPath="$PROJECT_DIR$/LLD.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SRS.md" beforeDir="false" afterPath="$PROJECT_DIR$/SRS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/.env.example" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/backend/adk_runner.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/backend/adk_runner.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/backend/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/backend/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/backend/telegram.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/backend/telegram.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_agent/env.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent/env.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/uv.lock" beforeDir="false" afterPath="$PROJECT_DIR$/uv.lock" afterDir="false" />
-    </list>
+    <list default="true" id="d76a52a2-e718-4843-bda1-894bcd994dc3" name="Changes" comment="changing the instructions" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -38,6 +21,7 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="PUSH_AUTO_UPDATE" value="true" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
         <entry key="$PROJECT_DIR$" value="master" />
@@ -184,7 +168,7 @@
       <option name="presentableId" value="Default" />
       <updated>1782808335170</updated>
       <workItem from="1790700413205" duration="755000" />
-      <workItem from="1790701968432" duration="2281000" />
+      <workItem from="1790701968432" duration="2496000" />
     </task>
     <task id="LOCAL-00001" summary="new commits">
       <option name="closed" value="true" />
@@ -226,7 +210,15 @@
       <option name="project" value="LOCAL" />
       <updated>1782812554759</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="changing the instructions">
+      <option name="closed" value="true" />
+      <created>1790704335265</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1790704335265</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -238,6 +230,7 @@
     <MESSAGE value="making changes in files" />
     <MESSAGE value="changing the file" />
     <MESSAGE value="file changes" />
-    <option name="LAST_COMMIT_MESSAGE" value="file changes" />
+    <MESSAGE value="changing the instructions" />
+    <option name="LAST_COMMIT_MESSAGE" value="changing the instructions" />
   </component>
 </project>
