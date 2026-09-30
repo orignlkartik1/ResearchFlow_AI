@@ -16,6 +16,10 @@ This Low-Level Design describes the concrete modules, functions, data contracts,
 | `my_agent/backend/main.py` | `app`, `lifespan`, `ChatRequest`, `health`, `chat`, `analyze_pdf`, `telegram_webhook` | Defines FastAPI lifecycle and HTTP routes |
 | `my_agent/backend/adk_runner.py` | `APP_NAME`, `session_service`, `_ensure_session`, `_run_once`, `ask_agent`, `discard_agent_session` | Runs ADK agents and manages process-local sessions |
 | `my_agent/backend/pdf/extractor.py` | `extract_pdf`, `ExtractedDocument`, `ExtractedPage` | Validates in-memory PDF bytes, extracts page text, and enforces document limits |
+| `my_agent/backend/pdf/document_classifier.py` | `DocumentClassification`, `classify_document` | Classifies bounded extracted text, validates structured metadata/confidence, and provides a timeout/error fallback |
+| `my_agent/backend/research/router.py` | `ResearchWorkflowResult`, `process_document` | Selects the existing seminal coordinator or general-paper workflow and clears its temporary session |
+| `my_agent/sub_agents/academic_generalresearch/agent.py` | `academic_generalresearch_agent` | Analyzes general papers without assuming they are seminal |
+| `my_agent/sub_agents/academic_generalresearch/prompt.py` | `ACADEMIC_GENERALRESEARCH_PROMPT` | Defines evidence-grounded general-paper analysis and missing-information behavior |
 | `my_agent/backend/telegram.py` | `start`, `chat`, `get_telegram_application`, `create_telegram_application`, `process_telegram_update`, `set_telegram_webhook`, `delete_telegram_webhook` | Lazily creates the Telegram application and handles commands, messages, webhooks, and debug polling |
 | `my_agent/backend/telegram_messages.py` | `split_telegram_message`, `send_long_message`, `reply_long_text`, `safe_delete_message`, `safe_edit_text` | Handles Telegram message limits and send/edit/delete failures |
 | `my_agent/sub_agents/academic_webresearch/agent.py` | `academic_websearch_agent` | Defines the retrieval sub-agent using `google_search` |
@@ -77,10 +81,14 @@ Processing flow:
 2. Validate PDF content and extract each page's text in memory.
 3. Reject documents over 100 pages or 120,000 extracted text characters.
 4. Reject documents with fewer than 20 extractable alphanumeric characters; scanned/image-only PDFs are not OCR-processed.
-5. Send page-labeled text to `ask_agent()` with a fresh, per-request user ID.
-6. Close the upload and return the analysis response and page count.
+5. Classify a bounded excerpt (up to 20,000 characters from the beginning and end) using structured output and a 45-second timeout.
+6. Route confident seminal classifications to `ask_agent()` and general/uncertain classifications to `academic_generalresearch_agent` through the shared runner.
+7. On classifier failure, use general analysis with zero confidence and `classification_status: "fallback"`.
+8. Delete temporary classifier/workflow sessions, close the upload, and return analysis, page count, metadata, and workflow.
 
-Success includes `success`, `filename`, `page_count`, and `result.response`. Failures return a JSON `error` object with a stable code; model failures return `502` without provider details.
+Success preserves `success`, `filename`, `page_count`, and `result.response`, adding `document` and `workflow`. Failures return a JSON `error` object with a stable code; selected-workflow failures return `502` without provider details, while temporary-session cleanup failures return `500` with `SESSION_CLEANUP_FAILED`.
+
+`document` contains `type` (`seminal` or `general`), `confidence` (`0.0` through `1.0`), optional `title`, `authors`, optional `publication_year`, `classification_uncertain`, and `classification_status` (`classified` or `fallback`). `workflow` is `seminal` or `general`. Classifier failures return a successful general-analysis response with confidence `0.0`, uncertainty set, and fallback status; they do not present the classification as certain.
 
 ## 4. FastAPI Lifecycle
 
@@ -223,6 +231,7 @@ The upload cap is 15 MiB, the page cap is 100, and the extracted-text cap is 120
 | No extractable PDF text | Image-only or nearly empty extracted text | JSON `422` error |
 | PDF size limit exceeded | Upload, page, or text cap | JSON `413` error |
 | PDF research failure | `ask_agent` failure | Generic JSON `502` error |
+| Temporary ADK session cleanup failure | Session service cannot delete a short-lived session | JSON `500` `SESSION_CLEANUP_FAILED` |
 | Telegram send/edit/delete failure | Telegram API or unexpected exception | Logged; bot continues |
 | Direct polling without opt-in | Missing `ENABLE_TELEGRAM_POLLING=1` | `RuntimeError` |
 

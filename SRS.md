@@ -11,7 +11,7 @@
 
 ### 1.1 Purpose
 
-ResearchFlow AI is a multi-agent assistant for academic literature exploration. It analyzes a seminal paper or research prompt, discovers recent citing or related papers, and proposes future research directions through a direct HTTP API and a Telegram bot interface.
+ResearchFlow AI is a multi-agent assistant for academic literature exploration. It classifies uploaded research papers with confidence, preserves the existing seminal-paper workflow, and adds general-paper analysis alongside direct HTTP, browser, and Telegram interfaces.
 
 ### 1.2 Scope
 
@@ -20,6 +20,7 @@ The current system includes:
 - Google ADK coordinator and sub-agent orchestration.
 - FastAPI backend with `/health`, `/chat`, `/api/analyze-pdf`, and `/telegram/webhook`.
 - In-memory PDF validation and page-by-page text extraction for text-based PDFs.
+- Confidence-based PDF classification and routing to seminal or general-paper workflows.
 - Telegram bot integration using `python-telegram-bot`.
 - Webhook-first Telegram runtime with optional local polling.
 - In-memory conversation sessions.
@@ -58,7 +59,7 @@ ResearchFlow AI is a Python service composed of:
 - Preserve context for follow-up questions while the process is running.
 - Protect Telegram webhook requests with an optional shared secret.
 - Deliver long Telegram responses without exceeding Telegram message limits.
-- Send extracted PDF research context through the existing `ask_agent()` path.
+- Route confidently classified seminal PDFs through the existing `ask_agent()` path and general/uncertain PDFs to the general-paper analysis agent.
 
 ### 2.3 User Classes
 
@@ -150,9 +151,13 @@ ResearchFlow AI is a Python service composed of:
 - **F7.3** The endpoint shall extract text per page and preserve page boundaries in the research input.
 - **F7.4** The endpoint shall reject uploads over 15 MiB, documents over 100 pages, or extracted text over 120,000 characters without truncation.
 - **F7.5** The endpoint shall reject image-only or otherwise text-empty PDFs with a clear `NO_EXTRACTABLE_TEXT` error; OCR is out of scope.
-- **F7.6** The endpoint shall submit extracted text to the existing `ask_agent()` path and return its response with filename and page count.
-- **F7.7** The endpoint shall not permanently store uploaded PDFs and shall delete its temporary ADK session after analysis.
-- **F7.8** PDF processing and research failures shall return structured JSON errors without exposing credentials or internal tracebacks.
+- **F7.6** The endpoint shall classify a bounded excerpt of extracted text with validated document type, confidence, and available title/author/year metadata.
+- **F7.7** The endpoint shall route confident seminal papers to the existing `ask_agent()` flow and general or uncertain papers to the general-paper analysis workflow.
+- **F7.8** Invalid, insufficient, timed-out, or unavailable classification shall select general-paper analysis and explicitly report a zero-confidence fallback.
+- **F7.9** The endpoint shall preserve existing success response fields and add document classification and selected workflow metadata.
+- **F7.10** The endpoint shall not permanently store uploaded PDFs and shall delete temporary ADK sessions after analysis.
+- **F7.11** PDF processing and research failures shall return structured JSON errors without exposing credentials or internal tracebacks.
+- **F7.12** Temporary ADK session cleanup failures shall return a structured `SESSION_CLEANUP_FAILED` error.
 
 ## 4. Non-Functional Requirements
 
@@ -273,7 +278,7 @@ Success response:
 
 ### 7.3 PDF Analysis
 
-`POST /api/analyze-pdf` accepts multipart form data with a `file` field. Successful responses include `success`, `filename`, `page_count`, and `result.response`. Errors include a stable error `code` and safe user-facing `message`.
+`POST /api/analyze-pdf` accepts multipart form data with a `file` field. Successful responses preserve `success`, `filename`, `page_count`, and `result.response`, and include additive `document` classification metadata and a selected `workflow`. Classification is an inference with confidence, not an objective determination. Uncertain or unavailable classifications use the general workflow and are reported as uncertain/fallback. Errors include a stable error `code` and safe user-facing `message`.
 
 ## 8. Acceptance Criteria
 
@@ -281,7 +286,9 @@ Success response:
 - [ ] `/health` returns `{"status":"ok"}`.
 - [ ] `/api/analyze-pdf` extracts text PDFs and preserves page boundaries in the agent input.
 - [ ] `/api/analyze-pdf` rejects empty, non-PDF, malformed, image-only, and oversized documents.
-- [ ] PDF analysis uses `ask_agent()` and removes its temporary ADK session.
+- [ ] Confident seminal PDF analysis uses the existing `ask_agent()` workflow; general/uncertain papers use the general-paper workflow.
+- [ ] Classifier failure uses general analysis and is reported as an uncertain, zero-confidence fallback.
+- [ ] PDF analysis removes temporary classifier and workflow ADK sessions.
 - [ ] Sessions are reused for repeated `user_id` values.
 - [ ] `/telegram/webhook` rejects invalid secrets when a secret is configured.
 - [ ] `/telegram/webhook` rejects invalid JSON.

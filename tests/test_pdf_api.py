@@ -8,8 +8,11 @@ from pypdf import PdfWriter
 from fastapi.testclient import TestClient
 
 from my_agent.backend import adk_runner
+from my_agent.backend.adk_runner import AgentSessionCleanupError
 from my_agent.backend import main
 from my_agent.backend.pdf.extractor import extract_pdf
+from my_agent.backend.pdf.document_classifier import DocumentClassification
+from my_agent.backend.research.router import ResearchWorkflowResult
 
 
 def make_pdf(page_texts: list[str], image_only_pages: set[int] | None = None) -> bytes:
@@ -125,12 +128,20 @@ class PDFAPITests(unittest.TestCase):
         self.assertIn("[Page 3]\nThird page research text.", extracted.research_text())
 
     def test_valid_pdf_uses_shared_research_path(self):
-        agent = AsyncMock(return_value="Research result")
-        cleanup = AsyncMock()
-        with (
-            patch.object(main, "ask_agent", agent),
-            patch.object(main, "discard_agent_session", cleanup),
-        ):
+        research = AsyncMock(
+            return_value=ResearchWorkflowResult(
+                document=DocumentClassification(
+                    document_type="seminal",
+                    confidence=0.91,
+                    title="A substantial research paper",
+                    authors=["A. Researcher"],
+                    publication_year=2020,
+                ),
+                workflow="seminal",
+                response="Research result",
+            )
+        )
+        with patch.object(main, "process_document", research):
             response = self.upload_pdf(make_pdf(["A substantial research paper with meaningful text."]))
 
         self.assertEqual(response.status_code, 200)
@@ -140,14 +151,21 @@ class PDFAPITests(unittest.TestCase):
                 "success": True,
                 "filename": "paper.pdf",
                 "page_count": 1,
+                "document": {
+                    "type": "seminal",
+                    "confidence": 0.91,
+                    "title": "A substantial research paper",
+                    "authors": ["A. Researcher"],
+                    "publication_year": 2020,
+                    "classification_uncertain": False,
+                    "classification_status": "classified",
+                },
+                "workflow": "seminal",
                 "result": {"response": "Research result"},
             },
         )
-        user_id, message = agent.await_args.args
-        self.assertTrue(user_id.startswith("pdf-upload-"))
-        cleanup.assert_awaited_once_with(user_id)
-        self.assertIn("[Page 1]", message)
-        self.assertIn("A substantial research paper", message)
+        research.assert_awaited_once()
+        self.assertEqual(research.await_args.args[0].filename, "paper.pdf")
 
     def test_missing_and_empty_uploads_are_rejected(self):
         missing = self.request("post", "/api/analyze-pdf")
@@ -232,13 +250,22 @@ class PDFAPITests(unittest.TestCase):
         self.assertNotIn("sensitive internal detail", response.text)
 
     def test_research_failure_is_returned_without_internal_details(self):
-        agent = AsyncMock(side_effect=RuntimeError("internal provider detail"))
-        with patch.object(main, "ask_agent", agent):
+        research = AsyncMock(side_effect=RuntimeError("internal provider detail"))
+        with patch.object(main, "process_document", research):
             response = self.upload_pdf(make_pdf(["A substantial research paper with meaningful text."]))
 
         self.assertEqual(response.status_code, 502)
         self.assertEqual(response.json()["error"]["code"], "RESEARCH_PROCESSING_FAILED")
         self.assertNotIn("internal provider detail", response.text)
+
+    def test_session_cleanup_failure_keeps_specific_api_error(self):
+        research = AsyncMock(side_effect=AgentSessionCleanupError("internal detail"))
+        with patch.object(main, "process_document", research):
+            response = self.upload_pdf(make_pdf(["A substantial research paper with meaningful text."]))
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json()["error"]["code"], "SESSION_CLEANUP_FAILED")
+        self.assertNotIn("internal detail", response.text)
 
     def test_temporary_agent_session_is_deleted(self):
         user_id = "pdf-upload-test-session"
@@ -256,6 +283,19 @@ class PDFAPITests(unittest.TestCase):
             session_id=user_id,
         )
         self.assertNotIn(user_id, adk_runner._created_sessions)
+
+    def test_temporary_agent_session_cleanup_failure_is_explicit(self):
+        user_id = "pdf-upload-cleanup-failure"
+        adk_runner._created_sessions.add(user_id)
+        delete_session = AsyncMock(side_effect=RuntimeError("internal detail"))
+        try:
+            with (
+                patch.object(adk_runner.session_service, "delete_session", delete_session),
+                self.assertRaises(AgentSessionCleanupError),
+            ):
+                asyncio.run(adk_runner.discard_agent_session(user_id))
+        finally:
+            adk_runner._created_sessions.discard(user_id)
 
     def test_existing_health_chat_and_web_only_startup(self):
         agent = AsyncMock(return_value="Existing chat result")

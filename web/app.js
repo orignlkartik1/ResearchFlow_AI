@@ -14,6 +14,11 @@
   const uploadError = document.querySelector("#upload-error");
   const resultMeta = document.querySelector("#result-meta");
   const analysisText = document.querySelector("#analysis-text");
+  const documentType = document.querySelector("#document-type");
+  const documentWorkflow = document.querySelector("#document-workflow");
+  const documentConfidence = document.querySelector("#document-confidence");
+  const classificationNote = document.querySelector("#classification-note");
+  const documentIdentifiers = document.querySelector("#document-identifiers");
   const limitsNote = document.querySelector("#limits-note");
   let selectedFile = null;
 
@@ -131,6 +136,33 @@
     resultMeta.textContent = `${data.filename} · ${data.page_count} ${
       data.page_count === 1 ? "page" : "pages"
     }`;
+    const isSeminal = data.workflow === "seminal";
+    documentType.textContent = isSeminal
+      ? "Seminal / foundational paper"
+      : "General research paper";
+    documentWorkflow.textContent = isSeminal
+      ? "Seminal research"
+      : "Paper analysis";
+    documentConfidence.textContent =
+      data.document.classification_status === "fallback"
+        ? "Unavailable"
+        : `${Math.round(data.document.confidence * 100)}%`;
+    classificationNote.textContent = data.document.classification_status === "fallback"
+      ? "The paper type could not be determined. ResearchFlow-AI used general paper analysis as a cautious fallback."
+      : data.document.classification_uncertain
+        ? "The classification is uncertain. General paper analysis was selected rather than assuming the paper is seminal."
+        : "Paper type is an evidence-based estimate, not an objective determination.";
+    classificationNote.hidden =
+      !data.document.classification_uncertain &&
+      data.document.classification_status !== "fallback";
+    const identifiers = [
+      data.document.title,
+      data.document.authors.length > 0 ? data.document.authors.join(", ") : null,
+      data.document.publication_year,
+    ].filter((value) => value !== null && value !== undefined);
+    documentIdentifiers.textContent = identifiers.length > 0
+      ? identifiers.join(" · ")
+      : "Title, authors, and publication year were not identified in the document.";
     analysisText.textContent = data.result.response;
     uploadView.hidden = true;
     loadingView.hidden = true;
@@ -173,6 +205,11 @@
         payload.success !== true ||
         typeof payload.filename !== "string" ||
         !Number.isInteger(payload.page_count) ||
+        !payload.document ||
+        !["seminal", "general"].includes(payload.document.type) ||
+        typeof payload.document.confidence !== "number" ||
+        !Array.isArray(payload.document.authors) ||
+        !["seminal", "general"].includes(payload.workflow) ||
         typeof payload.result?.response !== "string"
       ) {
         throw new Error("ResearchFlow-AI returned an unexpected response. Please try again.");
@@ -197,6 +234,12 @@
     updateSelectedFile();
     clearError();
     resultMeta.textContent = "";
+    documentType.textContent = "";
+    documentWorkflow.textContent = "";
+    documentConfidence.textContent = "";
+    classificationNote.textContent = "";
+    classificationNote.hidden = true;
+    documentIdentifiers.textContent = "";
     analysisText.textContent = "";
     resultView.hidden = true;
     loadingView.hidden = true;

@@ -26,6 +26,10 @@ class WebUITests(unittest.TestCase):
         self.assertIn("fetch(\"/api/analyze-pdf\"", script.text)
         self.assertIn("NO_EXTRACTABLE_TEXT", script.text)
         self.assertIn("INVALID_PDF", script.text)
+        self.assertIn("document-confidence", script.text)
+        self.assertIn("classification_uncertain", script.text)
+        self.assertIn("Seminal / foundational paper", script.text)
+        self.assertIn("General research paper", script.text)
         self.assertIn("analysisText.textContent = data.result.response", script.text)
         self.assertNotIn(".innerHTML", script.text)
 

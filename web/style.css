@@ -481,6 +481,61 @@ p {
   font-size: 13px;
 }
 
+.document-summary {
+  margin-bottom: 17px;
+  padding: 17px 19px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fbfcfa;
+}
+
+.document-summary > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.summary-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 620;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+
+.summary-value {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.classification-note,
+.document-identifiers {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.classification-note {
+  padding: 9px 11px;
+  border: 1px solid #eadfca;
+  border-radius: 7px;
+  color: #765b2f;
+  background: #fcf8ee;
+}
+
+.document-identifiers:empty {
+  display: none;
+}
+
 .analysis-card {
   padding: 27px clamp(19px, 4vw, 38px) 35px;
   border: 1px solid var(--line);
@@ -647,6 +702,16 @@ a:focus-visible {
 
   .analysis-card {
     padding-top: 21px;
+  }
+
+  .document-summary {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .classification-note,
+  .document-identifiers {
+    grid-column: auto;
   }
 
   .analysis-text {
