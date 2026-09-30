@@ -40,6 +40,10 @@ ResearchFlow_AI/
 |       +-- academic_newresearch/
 |           +-- agent.py                  # Future research synthesis agent
 |           +-- prompt.py                 # Synthesis prompt
++-- web/
+|   +-- index.html                        # ResearchFlow-AI web interface
+|   +-- style.css                         # Responsive UI styles
+|   +-- app.js                            # Browser upload and results flow
 +-- README.md
 +-- SRS.md
 +-- DESIGN.md
@@ -172,11 +176,25 @@ ENABLE_TELEGRAM_POLLING=1
 
 ## Running
 
-### FastAPI Backend
+### FastAPI Web App
+
+Start the FastAPI application, which serves both the web interface and API:
 
 ```bash
-python -m uvicorn my_agent.backend.main:app --host 127.0.0.1 --port 8000 --reload
+uv run uvicorn my_agent.backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
+
+Open [http://localhost:8000/](http://localhost:8000/), choose or drop a PDF, and select **Analyze research**. The results view shows the returned analysis and lets you start another upload without refreshing. The UI sends the PDF as multipart form data to the same-origin `/api/analyze-pdf` endpoint; AI credentials remain server-side.
+
+Text-based PDFs are supported; scanned/image-only PDFs are not, and OCR is unavailable. Uploads are processed in memory and are not permanently stored. Authentication is not implemented. Before operating as a public production service, add appropriate authentication and rate limiting.
+
+For a Render web service, no separate frontend or deployment configuration is required. Use a start command that binds Uvicorn to the platform-provided port:
+
+```bash
+uv run uvicorn my_agent.backend.main:app --host 0.0.0.0 --port $PORT
+```
+
+Set `ENABLE_TELEGRAM=false` for web-only startup; no `TELEGRAM_TOKEN` is needed in that mode.
 
 Test `/chat`:
 
@@ -305,11 +323,12 @@ The route returns `503` when Telegram integration is disabled.
 
 ## Future Enhancements
 
+- Authentication and rate limiting before public production use.
+- PDF follow-up chat.
 - Persistent sessions with Redis, PostgreSQL, or another shared store.
 - Scholarly database integrations.
 - Citation graph visualization.
 - Structured exports such as Markdown, JSON, BibTeX, or PDF.
-- Authentication and rate limiting for public deployments.
 - Tests for API, Telegram message splitting, webhook validation, and agent runner behavior.
 
 ## License

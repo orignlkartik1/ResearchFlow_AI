@@ -3,7 +3,7 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from typing import Annotated
 
 from fastapi import (
@@ -16,7 +16,8 @@ from fastapi import (
     UploadFile,
 )
 from pydantic import BaseModel
-from starlette.responses import JSONResponse
+from starlette.responses import FileResponse, JSONResponse
+from starlette.staticfiles import StaticFiles
 
 from my_agent.backend.adk_runner import ask_agent, discard_agent_session
 from my_agent.backend.pdf.extractor import (
@@ -39,6 +40,7 @@ load_environment()
 TELEGRAM_WEBHOOK_SECRET = os.environ.get("TELEGRAM_WEBHOOK_SECRET")
 TELEGRAM_WEBHOOK_URL = os.environ.get("TELEGRAM_WEBHOOK_URL")
 logger = logging.getLogger(__name__)
+WEB_DIR = Path(__file__).resolve().parents[2] / "web"
 
 
 @asynccontextmanager
@@ -213,3 +215,11 @@ async def telegram_webhook(
     return {
         "ok": True
     }
+
+
+@app.get("/", include_in_schema=False)
+async def web_home():
+    return FileResponse(WEB_DIR / "index.html")
+
+
+app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
