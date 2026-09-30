@@ -1,6 +1,6 @@
 # ResearchFlow AI
 
-ResearchFlow AI is a multi-agent academic research assistant built with Google ADK, FastAPI, and a Telegram bot interface. It helps users analyze seminal papers or research prompts, search for recent citing work, and synthesize future research directions.
+ResearchFlow AI is a multi-agent academic research assistant built with Google ADK, FastAPI, a standalone web interface, and a Telegram bot interface. Uploaded papers are classified with confidence and routed either to the existing seminal-paper research flow or to a general-paper analysis workflow.
 
 Detailed requirements and design notes are maintained in [SRS.md](./SRS.md), [DESIGN.md](./DESIGN.md), [HLD.md](./HLD.md), and [LLD.md](./LLD.md).
 
@@ -10,9 +10,9 @@ Detailed requirements and design notes are maintained in [SRS.md](./SRS.md), [DE
 2. Expose `GET /health` for a basic service health check.
 3. Analyze text-based research PDFs through `POST /api/analyze-pdf`.
 4. Accept Telegram updates through `POST /telegram/webhook` when Telegram is enabled.
-5. Run a Google ADK coordinator agent with two specialist sub-agents.
-6. Search the web for recent academic work using the ADK Google Search tool
-7. Generate future research directions from the seminal paper context and recent papers.
+5. Classify uploaded paper text and route seminal or uncertain/general papers to specialized workflows.
+6. Run the existing Google ADK coordinator with web-search and future-research sub-agents for seminal papers.
+7. Analyze general papers for research problem, motivation, methods, results, contributions, limits, gaps, and possible directions.
 8. Preserve per-user conversation context in memory while the backend process is running.
 9. Split long Telegram responses and send extremely large responses as text attachments.
 
@@ -31,8 +31,11 @@ ResearchFlow_AI/
 |   |   +-- adk_runner.py                 # ADK Runner and in-memory sessions
 |   |   +-- telegram.py                   # Telegram handlers and webhook helpers
 |   |   +-- telegram_messages.py          # Long-message split/send helpers
-|   |   +-- pdf/
-|   |       +-- extractor.py              # In-memory PDF validation and extraction
+|   |   |   +-- pdf/
+|   |   |       +-- extractor.py              # In-memory PDF validation and extraction
+|   |   |       +-- document_classifier.py    # Confidence-based type and metadata classification
+|   |   +-- research/
+|   |       +-- router.py                 # Selects the seminal or general-paper workflow
 |   +-- sub_agents/
 |       +-- academic_webresearch/
 |       |   +-- agent.py                  # Google Search-backed retrieval agent
@@ -40,6 +43,9 @@ ResearchFlow_AI/
 |       +-- academic_newresearch/
 |           +-- agent.py                  # Future research synthesis agent
 |           +-- prompt.py                 # Synthesis prompt
+|       +-- academic_generalresearch/
+|           +-- agent.py                  # General research-paper analysis
+|           +-- prompt.py                 # Evidence-grounded paper-analysis prompt
 +-- web/
 |   +-- index.html                        # ResearchFlow-AI web interface
 |   +-- style.css                         # Responsive UI styles
@@ -57,7 +63,7 @@ ResearchFlow_AI/
 ## Architecture Summary
 
 ```text
-Telegram user, API client, or PDF upload
+Browser, API client, or Telegram user
         |
         v
 FastAPI app: my_agent.backend.main
@@ -67,15 +73,16 @@ FastAPI app: my_agent.backend.main
         +-- /health
         +-- /telegram/webhook
         |
-        v
-ADK runner: my_agent.backend.adk_runner
-        |
-        v
-Coordinator agent: my_agent.agent
-        |
-        +-- academic_websearch_agent + google_search
-        +-- academic_newresearch_agent
+        +-- PDF: extract once -> classify with confidence -> research workflow router
+                                     |                          |
+                                     v                          v
+                          academic_coordinator       academic_generalresearch_agent
+                                     |
+                       academic_websearch_agent
+                       academic_newresearch_agent
 ```
+
+Document classification is a model-assisted inference, not an objective determination. The classifier receives a bounded excerpt from the extracted text (including the beginning and end), validates structured JSON and metadata, and has a 45-second timeout. Missing/invalid output, insufficient text, or model failure uses general-paper analysis with confidence `0` and an explicit fallback status. A seminal classification below `0.70` confidence is treated as uncertain and routed to general analysis. Only a confident seminal classification uses the existing coordinator workflow.
 
 The FastAPI app initializes and starts Telegram during its lifespan only when Telegram is enabled. Telegram remains enabled by default when `TELEGRAM_TOKEN` is configured, preserving existing deployments; set `ENABLE_TELEGRAM=false` for a web-only deployment. Setting `ENABLE_TELEGRAM=true` without a token fails clearly at startup. When Telegram is enabled and `TELEGRAM_WEBHOOK_URL` is configured, startup registers the webhook. Telegram message handling calls the same ADK runner as `POST /chat`.
 
@@ -107,7 +114,11 @@ The coordinator owns the user-facing workflow and exposes two sub-agents through
 - `POST /api/analyze-pdf` for PDF upload and research analysis.
 - `POST /telegram/webhook` for Telegram updates.
 
-The app validates Telegram webhook secrets when `TELEGRAM_WEBHOOK_SECRET` is set, schedules Telegram update processing as a background task, and manages the optional Telegram application's startup and shutdown lifecycle. PDF uploads are extracted by `my_agent/backend/pdf/extractor.py` and sent through the shared ADK runner.
+The app validates Telegram webhook secrets when `TELEGRAM_WEBHOOK_SECRET` is set, schedules Telegram update processing as a background task, and manages the optional Telegram application's startup and shutdown lifecycle. PDF uploads are extracted by `my_agent/backend/pdf/extractor.py`, classified and routed by `my_agent/backend/research/router.py`, and passed to the existing seminal coordinator or the general-paper analysis agent using shared ADK session/runner services.
+
+### General Paper Workflow
+
+`my_agent/sub_agents/academic_generalresearch/agent.py` analyzes the supplied paper without assuming it is seminal. Its prompt covers paper metadata, problem, motivation, abstract, objectives, methodology, data, experiments, findings, contributions, assumptions, limitations, open problems, future work, gaps, and potential directions. Unsupported details must be identified as unavailable rather than invented.
 
 ### ADK Runner
 
@@ -268,7 +279,7 @@ Returns `{"status": "ok"}` when the application is serving requests.
 
 ### `POST /api/analyze-pdf`
 
-Upload a PDF as `multipart/form-data` using the `file` field. The backend extracts text page by page and sends it to the same `ask_agent()` research path used by `/chat`; uploaded files are not permanently stored.
+Upload a PDF as `multipart/form-data` using the `file` field. The backend extracts text page by page, classifies a bounded excerpt, then routes the full page-labeled text to the selected workflow. The existing `/chat` behavior remains unchanged; no separate research pipeline or permanent PDF storage is introduced.
 
 ```bash
 curl -X POST \
@@ -283,13 +294,25 @@ Successful response:
   "success": true,
   "filename": "paper.pdf",
   "page_count": 12,
+  "document": {
+    "type": "general",
+    "confidence": 0.82,
+    "title": "Example Research Paper",
+    "authors": ["A. Researcher"],
+    "publication_year": 2024,
+    "classification_uncertain": false,
+    "classification_status": "classified"
+  },
+  "workflow": "general",
   "result": {
     "response": "Research analysis..."
   }
 }
 ```
 
-The current limits are 15 MiB per upload, 100 pages, and 120,000 extracted text characters; at least 20 alphanumeric characters must be extractable. Files must have a `.pdf` filename and a valid PDF header/content; the provided MIME type is not trusted. Scanned/image-only PDFs without extractable text are rejected; OCR is not supported yet. Documents exceeding a limit receive an error rather than being silently truncated. PDF bytes and extracted text are processed in memory, and the per-request ADK session is deleted after analysis. AI credentials remain server-side.
+The original response fields (`success`, `filename`, `page_count`, and `result.response`) remain; `document` and `workflow` are additive. The document object reports type, confidence, title/authors/year when identified, uncertainty, and whether a fallback was used. "Seminal" is an evidence-based estimate, not an objective determination. Low-confidence, malformed, timed-out, or unavailable classifications use the general workflow; fallback is reported as general with zero confidence and `classification_status: "fallback"`.
+
+The current limits are 15 MiB per upload, 100 pages, and 120,000 extracted text characters; at least 20 alphanumeric characters must be extractable. Files must have a `.pdf` filename and a valid PDF header/content; the provided MIME type is not trusted. Scanned/image-only PDFs without extractable text are rejected; OCR is not supported yet. Documents exceeding a limit receive an error rather than being silently truncated. PDF bytes and extracted text are processed in memory, and temporary classifier/workflow ADK sessions are deleted after analysis. AI credentials remain server-side.
 
 ### `POST /telegram/webhook`
 

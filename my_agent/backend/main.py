@@ -1,7 +1,6 @@
 import hmac
 import logging
 import os
-import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path, PurePosixPath
 from typing import Annotated
@@ -19,16 +18,16 @@ from pydantic import BaseModel
 from starlette.responses import FileResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
-from my_agent.backend.adk_runner import ask_agent, discard_agent_session
+from my_agent.backend.adk_runner import AgentSessionCleanupError, ask_agent
 from my_agent.backend.pdf.extractor import (
     MAX_PDF_UPLOAD_BYTES,
-    ExtractedDocument,
     InvalidPDFError,
     NoExtractableTextError,
     PDFExtractionError,
     PDFTooLargeError,
     extract_pdf,
 )
+from my_agent.backend.research.router import process_document
 from my_agent.backend.telegram import (
     get_telegram_application,
     process_telegram_update,
@@ -88,16 +87,6 @@ def _pdf_error(status_code: int, code: str, message: str) -> JSONResponse:
     )
 
 
-def _build_pdf_analysis_message(document: ExtractedDocument) -> str:
-    return (
-        "The user has provided the following research paper as source material. "
-        "Analyze it now using the ResearchFlow-AI research workflow; do not ask "
-        "the user to provide the paper again. Page labels identify the original "
-        "PDF page boundaries.\n\n"
-        f"{document.research_text()}"
-    )
-
-
 @app.get("/health")
 async def health():
     return {"status": "ok"}
@@ -152,28 +141,16 @@ async def analyze_pdf(file: Annotated[UploadFile | None, File()] = None):
     finally:
         await file.close()
 
-    research_user_id = f"pdf-upload-{uuid.uuid4().hex}"
-    research_failed = False
     try:
-        response = await ask_agent(
-            research_user_id,
-            _build_pdf_analysis_message(document),
-        )
-    except Exception as exc:
-        logger.error("ResearchFlow analysis failed for uploaded PDF (%s)", type(exc).__name__)
-        research_failed = True
-
-    try:
-        await discard_agent_session(research_user_id)
-    except Exception as exc:
-        logger.error("Failed to clear temporary PDF analysis session (%s)", type(exc).__name__)
+        research_result = await process_document(document)
+    except AgentSessionCleanupError:
         return _pdf_error(
             500,
             "SESSION_CLEANUP_FAILED",
             "The analysis session could not be safely cleared.",
         )
-
-    if research_failed:
+    except Exception as exc:
+        logger.error("ResearchFlow analysis failed for uploaded PDF (%s)", type(exc).__name__)
         return _pdf_error(
             502,
             "RESEARCH_PROCESSING_FAILED",
@@ -184,8 +161,18 @@ async def analyze_pdf(file: Annotated[UploadFile | None, File()] = None):
         "success": True,
         "filename": document.filename,
         "page_count": document.page_count,
+        "document": {
+            "type": research_result.document.document_type,
+            "confidence": research_result.document.confidence,
+            "title": research_result.document.title,
+            "authors": research_result.document.authors,
+            "publication_year": research_result.document.publication_year,
+            "classification_uncertain": research_result.document.classification_uncertain,
+            "classification_status": research_result.document.classification_status,
+        },
+        "workflow": research_result.workflow,
         "result": {
-            "response": response,
+            "response": research_result.response,
         },
     }
 

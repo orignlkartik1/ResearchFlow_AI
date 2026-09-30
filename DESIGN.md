@@ -13,14 +13,14 @@ ResearchFlow AI reduces the manual effort of early academic literature explorati
 
 ## Interaction Design
 
-The primary interaction is conversational:
+The primary interaction supports both conversational research and routed PDF analysis:
 
 1. The user submits a research request through Telegram or `POST /chat`, or uploads a PDF through `POST /api/analyze-pdf`.
-2. The coordinator agent determines what paper context can be inferred from the request.
-3. The coordinator asks the web research sub-agent to search for recent citing or related papers.
-4. The coordinator asks the future research sub-agent to synthesize potential research directions.
-5. The system returns a structured answer.
-6. The user can ask follow-up questions in the same in-memory session.
+2. For a PDF, the backend extracts page-labeled text and classifies a bounded excerpt for document type, confidence, and available metadata.
+3. A confident seminal classification selects the existing coordinator and its web-research and future-research sub-agents.
+4. General or uncertain classifications select a separate general-paper analysis agent.
+5. The system returns workflow and classification metadata alongside the research response.
+6. Conversational users can continue through `/chat` or Telegram in their existing in-memory session.
 
 Telegram is optimized for lightweight, ongoing chat. The HTTP API is optimized for integration, testing, and non-Telegram clients.
 
@@ -31,8 +31,11 @@ The agent graph uses a coordinator pattern:
 - `academic_coordinator` owns the user-facing workflow and final response.
 - `academic_websearch_agent` owns retrieval using the ADK `google_search` tool.
 - `academic_newresearch_agent` owns synthesis of gaps and future directions.
+- `academic_generalresearch_agent` analyzes general papers without assuming they are seminal.
 
 The coordinator exposes sub-agents as ADK `AgentTool` tools. This keeps retrieval and synthesis responsibilities separate while allowing the root agent to compose the final response.
+
+The PDF classifier returns validated structured data and a confidence score. Confidence below `0.70`, malformed output, insufficient classifier text, model failure, or timeout selects general analysis; classifier failure is explicitly returned as a general fallback with zero confidence. "Seminal" is an inference, not an objective determination.
 
 ## Response Design
 
@@ -62,7 +65,7 @@ The direct chat API intentionally keeps a minimal contract:
 
 The Telegram webhook endpoint accepts raw Telegram update JSON and delegates processing to the Telegram application in a FastAPI background task. Optional webhook secret validation is controlled by environment configuration.
 
-`POST /api/analyze-pdf` accepts one PDF in the multipart `file` field. The backend extracts page-labeled text in memory, enforces size/page/text limits, and calls the same `ask_agent()` function used by `/chat`. Its temporary ADK session is deleted after the request; the uploaded file is not permanently stored.
+`POST /api/analyze-pdf` accepts one PDF in the multipart `file` field. It extracts page-labeled text in memory, enforces size/page/text limits, classifies a bounded excerpt, then routes the full text to the selected workflow. The existing `success`, `filename`, `page_count`, and `result.response` fields are preserved; `document` and `workflow` are additive. Temporary classifier and workflow sessions are deleted; the uploaded PDF is not permanently stored.
 
 ## Telegram Runtime Design
 

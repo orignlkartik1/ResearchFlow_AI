@@ -99,8 +99,11 @@
         <section id="loading-view" class="loading-card" aria-live="polite" hidden>
           <span class="loader" aria-hidden="true"></span>
           <div>
-            <h2>Reading your paper</h2>
-            <p>Uploading and analyzing your research. This may take a little while.</p>
+            <h2>Understanding your paper</h2>
+            <p>
+              ResearchFlow-AI is identifying the paper type and selecting a
+              research workflow. This may take a little while.
+            </p>
           </div>
         </section>
 
@@ -116,6 +119,22 @@
           </div>
           <h1 class="result-heading" id="result-title" tabindex="-1">Research analysis</h1>
           <p class="result-meta" id="result-meta"></p>
+          <section class="document-summary" aria-label="Document classification">
+            <div>
+              <span class="summary-label">Document type</span>
+              <span class="summary-value" id="document-type"></span>
+            </div>
+            <div>
+              <span class="summary-label">Workflow</span>
+              <span class="summary-value" id="document-workflow"></span>
+            </div>
+            <div>
+              <span class="summary-label">Classification confidence</span>
+              <span class="summary-value" id="document-confidence"></span>
+            </div>
+            <p class="classification-note" id="classification-note" hidden></p>
+            <p class="document-identifiers" id="document-identifiers"></p>
+          </section>
           <article class="analysis-card" aria-label="Research analysis">
             <div class="analysis-label">
               <span class="analysis-icon" aria-hidden="true">

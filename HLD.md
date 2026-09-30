@@ -4,11 +4,11 @@
 
 ## 1. Purpose
 
-This High-Level Design describes the major system components, responsibilities, integrations, and runtime flows for the current ResearchFlow AI implementation. It complements [SRS.md](./SRS.md), [DESIGN.md](./DESIGN.md), and [LLD.md](./LLD.md).
+This High-Level Design describes the major system components, responsibilities, integrations, and runtime flows for the current ResearchFlow AI implementation, including confidence-based PDF understanding and workflow selection. It complements [SRS.md](./SRS.md), [DESIGN.md](./DESIGN.md), and [LLD.md](./LLD.md).
 
 ## 2. System Context
 
-ResearchFlow AI accepts academic research requests through a direct HTTP API, text-based PDF upload, or a Telegram bot. It uses a Google ADK coordinator agent and two specialized sub-agents to analyze paper context, discover recent citing work, and generate future research directions.
+ResearchFlow AI accepts academic research requests through a standalone browser interface, direct HTTP API, text-based PDF upload, or a Telegram bot. Uploaded PDFs are classified and routed to either the existing Google ADK seminal-paper coordinator and its sub-agents or a new general-paper analysis agent.
 
 ```text
 User / API Client / PDF Upload / Telegram
@@ -65,6 +65,28 @@ ResearchFlow AI FastAPI Backend
 +-------------------------+
 ```
 
+PDF research workflows route after document understanding:
+
+```text
+PDF
+ |
+ v
+Document Understanding
+ |
++----------------------+----------------------+
+|                                             |
+v                                             v
+Seminal (confident)                    General or uncertain
+|                                             |
+v                                             v
+Existing academic coordinator          General paper analysis
+|                                             |
++----------------------+----------------------+
+                       |
+                       v
+                 Research insights
+```
+
 ## 4. Major Components
 
 | Layer | Component | Responsibility |
@@ -74,11 +96,14 @@ ResearchFlow AI FastAPI Backend
 | Interface | Telegram users | Send `/start` and text messages to the bot |
 | API | FastAPI app | Validates API/PDF requests, validates webhook secrets, manages optional Telegram lifecycle |
 | PDF | PDF extractor | Validates PDF files and extracts bounded, page-labeled text in memory |
+| Understanding | Document classifier | Classifies a bounded text excerpt; validates confidence and available metadata and falls back safely |
+| Research | Workflow router | Routes confident seminal papers to the existing coordinator and general/uncertain papers to general analysis |
 | Telegram | Telegram application | Parses updates, handles commands/messages, sends responses |
 | Orchestration | ADK runner | Creates sessions, executes the root agent, extracts final response text |
 | Agent | Coordinator | Owns the user-facing research workflow and invokes sub-agents |
 | Agent | Web research | Uses ADK Google Search to find recent citing or related papers |
 | Agent | Future research | Synthesizes gaps and future research suggestions |
+| Agent | General paper analysis | Analyzes methods, data, results, limits, gaps, and directions without assuming a seminal paper |
 | Config | Environment loader | Loads `my_agent/.env` and validates required values |
 
 ## 5. Core Data Flows
@@ -108,10 +133,14 @@ ResearchFlow AI FastAPI Backend
 
 1. A client uploads a `.pdf` file to `POST /api/analyze-pdf`.
 2. The backend enforces upload size, PDF content, page count, and extracted-text limits.
-3. pypdf extracts text page by page; scanned/image-only documents without usable text are rejected.
-4. The page-labeled text is submitted to the shared `ask_agent()` research path.
-5. The unique in-memory ADK session is deleted after the analysis.
-6. The API returns the filename, page count, and agent response; the PDF is not permanently stored.
+3. pypdf extracts text page by page once; scanned/image-only documents without usable text are rejected.
+4. The classifier receives a bounded excerpt from the beginning and end of the extracted text and returns validated type, confidence, and metadata.
+5. Confident seminal documents use the existing `ask_agent()` coordinator path; general or uncertain documents use the general-paper analysis agent through shared ADK runner/session services.
+6. Model errors, timeouts, or malformed classification output select general analysis with confidence `0` and an explicit fallback status.
+7. Temporary classifier and research sessions are deleted after analysis.
+8. The API preserves existing success fields and adds document classification metadata and the selected workflow; the PDF is not permanently stored.
+
+Classification is a model-assisted estimate, not an objective judgment of scholarly influence. Publication age, self-description, or reference count alone do not qualify a paper as seminal.
 
 ## 6. Deployment View
 

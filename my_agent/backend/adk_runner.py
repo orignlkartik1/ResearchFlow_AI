@@ -1,5 +1,6 @@
 import logging
 
+from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
@@ -13,10 +14,19 @@ session_service = InMemorySessionService()
 
 _created_sessions = set()
 
-def _create_runner(llm_model: str | None = None, search_model: str | None = None) -> Runner:
+
+class AgentSessionCleanupError(RuntimeError):
+    """Raised when a short-lived ADK session cannot be deleted."""
+
+
+def _create_runner(
+    llm_model: str | None = None,
+    search_model: str | None = None,
+    agent: Agent = root_agent,
+) -> Runner:
     return Runner(
         app_name=APP_NAME,
-        agent=root_agent,
+        agent=agent,
         session_service=session_service,
     )
 
@@ -36,8 +46,9 @@ async def _run_once(
     session_id: str,
     message: str,
     llm_model: str,
+    agent: Agent = root_agent,
 ) -> str:
-    runner = _create_runner(llm_model=llm_model)
+    runner = _create_runner(llm_model=llm_model, agent=agent)
     content = types.Content(
         role="user",
         parts=[types.Part(text=message)],
@@ -70,15 +81,37 @@ async def ask_agent(user_id: str, message: str) -> str:
         raise RuntimeError(f"Agent execution failed: {exc}") from exc
 
 
+async def run_specialized_agent(user_id: str, message: str, agent: Agent) -> str:
+    """Run a task-specific ADK agent with the shared session and runner services."""
+    session_id = user_id
+    await _ensure_session(user_id, session_id)
+
+    try:
+        return await _run_once(
+            user_id=user_id,
+            session_id=session_id,
+            message=message,
+            llm_model=None,
+            agent=agent,
+        )
+    except Exception as exc:
+        logger.exception("Specialized agent execution failed for user %s", user_id)
+        raise RuntimeError(f"Agent execution failed: {exc}") from exc
+
+
 async def discard_agent_session(user_id: str) -> None:
     """Remove a short-lived agent session after an API operation."""
     session_id = user_id
     if session_id not in _created_sessions:
         return
 
-    await session_service.delete_session(
-        app_name=APP_NAME,
-        user_id=user_id,
-        session_id=session_id,
-    )
+    try:
+        await session_service.delete_session(
+            app_name=APP_NAME,
+            user_id=user_id,
+            session_id=session_id,
+        )
+    except Exception as exc:
+        logger.exception("Failed to clear temporary agent session for user %s", user_id)
+        raise AgentSessionCleanupError("Agent session cleanup failed") from exc
     _created_sessions.discard(session_id)

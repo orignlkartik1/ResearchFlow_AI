@@ -1,13 +1,13 @@
 # Architecture
 
-ResearchFlow AI is organized around a FastAPI backend, a Telegram application managed by that backend, and a Google ADK agent graph.
+ResearchFlow AI is organized around a FastAPI backend that serves the browser interface and API, an optional Telegram application, a PDF understanding/router layer, and specialized Google ADK research workflows.
 
 For fuller design detail, use [HLD.md](./HLD.md) for the system-level view and [LLD.md](./LLD.md) for module-level behavior.
 
 ## Runtime View
 
 ```text
-API client, PDF upload, or Telegram (when enabled)
+Browser, API client, PDF upload, or Telegram (when enabled)
         |
         v
 my_agent.backend.main
@@ -17,21 +17,16 @@ my_agent.backend.main
         +-- /api/analyze-pdf
         +-- /telegram/webhook (optional)
         |
-        v
-my_agent.backend.adk_runner
-        |
-        v
-my_agent.agent:root_agent
-        |
-        +-- academic_websearch_agent
-        |       |
-        |       v
-        |   ADK google_search tool
-        |
-        +-- academic_newresearch_agent
+        +-- PDF -> extractor -> document classifier -> workflow router
+                                      |                    |
+                                      v                    v
+                         academic_coordinator    academic_generalresearch_agent
+                                      |
+                           academic_websearch_agent
+                           academic_newresearch_agent
 ```
 
-`POST /api/analyze-pdf` validates an in-memory upload, extracts text with page labels through `my_agent/backend/pdf/extractor.py`, and passes the resulting research context to the same `ask_agent()` entry point used by `/chat` and Telegram. Its unique ADK session is deleted after analysis. PDF upload does not create a separate research or AI implementation.
+`POST /api/analyze-pdf` validates an in-memory upload, extracts page-labeled text once, classifies a bounded excerpt, and routes the document. Confident seminal papers use the existing `ask_agent()` coordinator path; general or uncertain papers use the general-paper agent through the same ADK runner/session services. Short-lived classifier and workflow sessions are deleted. `/chat` and Telegram continue using the existing `ask_agent()` entry point.
 
 ## Components
 
@@ -39,23 +34,31 @@ my_agent.agent:root_agent
 |-----------|----------|----------------|
 | FastAPI app | `my_agent/backend/main.py` | Exposes `/health`, `/chat`, `/api/analyze-pdf`, and `/telegram/webhook`; manages optional Telegram lifecycle |
 | PDF extractor | `my_agent/backend/pdf/extractor.py` | Validates and extracts PDF text per page with upload, page, and text limits |
-| ADK runner | `my_agent/backend/adk_runner.py` | Creates in-memory sessions, runs the root agent, extracts final response text, and can delete short-lived PDF sessions |
+| Document classifier | `my_agent/backend/pdf/document_classifier.py` | Validates model-produced type, confidence, and available metadata; uses bounded input, timeout, and a general-workflow fallback |
+| Workflow router | `my_agent/backend/research/router.py` | Routes confident seminal papers to the existing coordinator and general/uncertain papers to the general analysis agent |
+| ADK runner | `my_agent/backend/adk_runner.py` | Creates in-memory sessions, runs root or specialized agents through shared execution services, extracts final response text, and deletes short-lived sessions |
 | Telegram bot | `my_agent/backend/telegram.py` | Handles `/start`, text messages, webhook updates, webhook setup, and optional debug polling |
 | Telegram messages | `my_agent/backend/telegram_messages.py` | Splits long responses and handles Telegram send/edit/delete failures |
 | Coordinator agent | `my_agent/agent.py` | Defines the root ADK agent and wires sub-agents as tools |
 | Environment loader | `my_agent/env.py` | Loads `my_agent/.env` and validates required values |
 | Web research sub-agent | `my_agent/sub_agents/academic_webresearch` | Searches for recent citing or related papers using ADK Google Search |
 | Future research sub-agent | `my_agent/sub_agents/academic_newresearch` | Synthesizes research gaps and future directions |
+| General research agent | `my_agent/sub_agents/academic_generalresearch` | Analyzes a general paper and distinguishes document evidence from suggestions |
 
 ## Data Flow
 
-1. The user sends a request through `/chat`, uploads a PDF, or sends a Telegram message.
+1. The user sends a request through `/chat`, uploads a PDF in the browser or API, or sends a Telegram message.
 2. FastAPI validates the request body or Telegram webhook secret.
 3. `adk_runner.ask_agent` creates or reuses an in-memory session for `user_id`.
 4. The coordinator agent processes the request.
 5. The coordinator invokes sub-agents through ADK `AgentTool`.
 6. The final ADK response is returned as JSON or sent back through Telegram.
-7. A PDF upload is validated and extracted page by page before its text is submitted to the same ADK runner.
+7. A PDF upload is validated and extracted once; the classifier receives a bounded excerpt of page-labeled text.
+8. A valid classification selects the workflow. Seminal confidence below `0.70` is treated as uncertain and routed to general analysis.
+9. Invalid output, insufficient classification text, classifier timeout, or model failure produces a general-workflow fallback with confidence `0`; the API reports that fallback.
+10. The selected workflow receives the full extracted text once. Temporary classifier and workflow sessions are deleted.
+
+Classification is a model-assisted inference, not an objective claim about scholarly impact. The classifier considers contribution and novelty alongside publication context and references when present; age, self-description, or reference count alone are not sufficient signals.
 
 ## Session Model
 
