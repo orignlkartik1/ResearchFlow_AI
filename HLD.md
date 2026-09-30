@@ -108,7 +108,7 @@ ResearchFlow AI FastAPI Backend
 
 1. A client uploads a `.pdf` file to `POST /api/analyze-pdf`.
 2. The backend enforces upload size, PDF content, page count, and extracted-text limits.
-3. PyMuPDF extracts text page by page; scanned/image-only documents without usable text are rejected.
+3. pypdf extracts text page by page; scanned/image-only documents without usable text are rejected.
 4. The page-labeled text is submitted to the shared `ask_agent()` research path.
 5. The unique in-memory ADK session is deleted after the analysis.
 6. The API returns the filename, page count, and agent response; the PDF is not permanently stored.

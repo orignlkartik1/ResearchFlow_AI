@@ -134,13 +134,13 @@ Current requirements include:
 - Python `>=3.13`
 - `fastapi`
 - `google-adk==2.3.0`
-- `pymupdf`
+- `pypdf` for in-memory, page-by-page PDF text extraction (BSD-3-Clause)
 - `pydantic`
 - `python-dotenv`
 - `python-telegram-bot`
 - `uvicorn`
 
-`pyproject.toml` also currently lists `aiogram` and `httpx`, but the active Telegram implementation uses `python-telegram-bot` and does not call the backend through HTTP.
+`httpx` remains a declared dependency. Telegram uses `python-telegram-bot`.
 
 ## Setup
 
@@ -314,4 +314,4 @@ The route returns `503` when Telegram integration is disabled.
 
 ## License
 
-This project is licensed under the MIT License. See the license file for details.
+The project declares the MIT license in `pyproject.toml` and this README. The repository does not yet include a `LICENSE` file because it does not identify a copyright holder.

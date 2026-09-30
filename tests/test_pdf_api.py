@@ -1,9 +1,10 @@
 import asyncio
 import os
 import unittest
+from io import BytesIO
 from unittest.mock import AsyncMock, patch
 
-import pymupdf
+from pypdf import PdfWriter
 from fastapi.testclient import TestClient
 
 from my_agent.backend import adk_runner
@@ -11,15 +12,90 @@ from my_agent.backend import main
 from my_agent.backend.pdf.extractor import extract_pdf
 
 
-def make_pdf(page_texts: list[str]) -> bytes:
-    document = pymupdf.open()
-    for text in page_texts:
-        page = document.new_page()
-        if text:
-            page.insert_text((72, 72), text)
-    contents = document.tobytes()
-    document.close()
-    return contents
+def make_pdf(page_texts: list[str], image_only_pages: set[int] | None = None) -> bytes:
+    image_only_pages = image_only_pages or set()
+    page_count = len(page_texts)
+    font_object_id = 3 + page_count * 2
+    image_object_id = font_object_id + 1
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        (
+            f"<< /Type /Pages /Kids [{' '.join(f'{3 + index * 2} 0 R' for index in range(page_count))}] "
+            f"/Count {page_count} >>"
+        ).encode(),
+    ]
+    page_objects = []
+    content_objects = []
+
+    for index, text in enumerate(page_texts):
+        page_object_id = 3 + index * 2
+        content_object_id = page_object_id + 1
+        resources = f"/Font << /F1 {font_object_id} 0 R >>"
+        if index in image_only_pages:
+            resources += f" /XObject << /Im0 {image_object_id} 0 R >>"
+        page_objects.append(
+            (
+                f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+                f"/Resources << {resources} >> /Contents {content_object_id} 0 R >>"
+            ).encode()
+        )
+        if index in image_only_pages:
+            content = b"q 16 0 0 16 72 72 cm /Im0 Do Q"
+        elif text:
+            escaped_text = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+            content = (
+                f"BT /F1 12 Tf 72 720 Td ({escaped_text}) Tj ET".encode("ascii")
+            )
+        else:
+            content = b""
+        content_objects.append(
+            f"<< /Length {len(content)} >>\nstream\n".encode()
+            + content
+            + b"\nendstream"
+        )
+
+    objects.extend(
+        item
+        for pair in zip(page_objects, content_objects)
+        for item in pair
+    )
+    objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
+    if image_only_pages:
+        image_data = b"FF0000>"
+        objects.append(
+            (
+                f"<< /Type /XObject /Subtype /Image /Width 1 /Height 1 "
+                f"/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /ASCIIHexDecode "
+                f"/Length {len(image_data)} >>\nstream\n"
+            ).encode()
+            + image_data
+            + b"\nendstream"
+        )
+
+    output = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for object_id, content in enumerate(objects, start=1):
+        offsets.append(len(output))
+        output.extend(f"{object_id} 0 obj\n".encode() + content + b"\nendobj\n")
+    xref_offset = len(output)
+    output.extend(f"xref\n0 {len(offsets)}\n".encode())
+    output.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        output.extend(f"{offset:010} 00000 n \n".encode())
+    output.extend(
+        f"trailer\n<< /Size {len(offsets)} /Root 1 0 R >>\n"
+        f"startxref\n{xref_offset}\n%%EOF\n".encode()
+    )
+    return bytes(output)
+
+
+def make_encrypted_pdf() -> bytes:
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    writer.encrypt("password")
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
 
 
 class PDFAPITests(unittest.TestCase):
@@ -36,12 +112,17 @@ class PDFAPITests(unittest.TestCase):
         )
 
     def test_extracts_text_and_preserves_page_boundaries(self):
-        extracted = extract_pdf(make_pdf(["First page research text.", "Second page research text."]), "paper.pdf")
+        extracted = extract_pdf(
+            make_pdf(["First page research text.", "", "Third page research text."]),
+            "paper.pdf",
+        )
 
-        self.assertEqual(extracted.page_count, 2)
-        self.assertEqual([page.page_number for page in extracted.pages], [1, 2])
+        self.assertEqual(extracted.page_count, 3)
+        self.assertEqual([page.page_number for page in extracted.pages], [1, 2, 3])
+        self.assertEqual(extracted.pages[1].text, "")
         self.assertIn("[Page 1]\nFirst page research text.", extracted.research_text())
-        self.assertIn("[Page 2]\nSecond page research text.", extracted.research_text())
+        self.assertIn("[Page 2]", extracted.research_text())
+        self.assertIn("[Page 3]\nThird page research text.", extracted.research_text())
 
     def test_valid_pdf_uses_shared_research_path(self):
         agent = AsyncMock(return_value="Research result")
@@ -89,20 +170,31 @@ class PDFAPITests(unittest.TestCase):
         self.assertEqual(malformed.status_code, 400)
         self.assertEqual(malformed.json()["error"]["code"], "INVALID_PDF")
 
-    def test_image_only_pdf_returns_no_extractable_text(self):
-        document = pymupdf.open()
-        page = document.new_page()
-        image = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 16, 16), 0)
-        image.clear_with(255)
-        page.insert_image(page.rect, pixmap=image)
-        contents = document.tobytes()
-        document.close()
+    def test_encrypted_pdf_is_rejected(self):
+        response = self.upload_pdf(make_encrypted_pdf())
 
-        response = self.upload_pdf(contents)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "INVALID_PDF")
+        self.assertIn("Password-protected PDFs", response.json()["error"]["message"])
+
+    def test_empty_pdf_returns_no_extractable_text(self):
+        response = self.upload_pdf(make_pdf([""]))
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["error"]["code"], "NO_EXTRACTABLE_TEXT")
+
+    def test_image_only_pdf_returns_no_extractable_text(self):
+        response = self.upload_pdf(make_pdf([""], image_only_pages={0}))
 
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json()["error"]["code"], "NO_EXTRACTABLE_TEXT")
         self.assertIn("Scanned/image-only PDFs", response.json()["error"]["message"])
+
+    def test_document_under_minimum_text_requirement_is_rejected(self):
+        response = self.upload_pdf(make_pdf(["Only 19 chars here"]))
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["error"]["code"], "NO_EXTRACTABLE_TEXT")
 
     def test_document_over_text_limit_is_rejected_without_truncation(self):
         with patch("my_agent.backend.pdf.extractor.MAX_PDF_TEXT_CHARACTERS", 10):

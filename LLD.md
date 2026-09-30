@@ -206,7 +206,7 @@ my_agent/.env
 
 ## 11. PDF Upload Handling
 
-`POST /api/analyze-pdf` keeps upload bytes in memory, checks the filename extension and PDF signature, and uses PyMuPDF to open and extract text. Per-page records are retained, including pages with no text, and page labels are included in the research prompt. The original upload is closed after processing and is not permanently stored.
+`POST /api/analyze-pdf` keeps upload bytes in memory, checks the filename extension and PDF signature, and uses pypdf to open and extract text. Per-page records are retained, including pages with no text, and page labels are included in the research prompt. The original upload is closed after processing and is not permanently stored.
 
 The upload cap is 15 MiB, the page cap is 100, and the extracted-text cap is 120,000 characters. Text is rejected at the cap rather than truncated. Image-only PDFs return `NO_EXTRACTABLE_TEXT`; OCR is not implemented. AI credentials are never returned in the API response.
 

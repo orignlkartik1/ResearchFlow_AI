@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from io import BytesIO
 
-import pymupdf
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
 MAX_PDF_UPLOAD_BYTES = 15 * 1024 * 1024
 MAX_PDF_PAGES = 100
@@ -52,38 +54,39 @@ def extract_pdf(file_bytes: bytes, filename: str) -> ExtractedDocument:
         raise InvalidPDFError("The uploaded file does not have a valid PDF header.")
 
     try:
-        document = pymupdf.open(stream=file_bytes, filetype="pdf")
-    except (pymupdf.FileDataError, ValueError) as exc:
+        document = PdfReader(BytesIO(file_bytes), strict=True)
+        if document.is_encrypted:
+            raise InvalidPDFError("Password-protected PDFs are not supported.")
+        page_count = len(document.pages)
+    except InvalidPDFError:
+        raise
+    except (PdfReadError, ValueError, EOFError) as exc:
         raise InvalidPDFError("The uploaded PDF is malformed or cannot be opened.") from exc
 
-    with document:
-        if document.needs_pass:
-            raise InvalidPDFError("Password-protected PDFs are not supported.")
-        page_count = document.page_count
-        if page_count > MAX_PDF_PAGES:
-            raise PDFTooLargeError("The PDF exceeds the 100-page analysis limit.")
+    if page_count > MAX_PDF_PAGES:
+        raise PDFTooLargeError("The PDF exceeds the 100-page analysis limit.")
 
-        pages: list[ExtractedPage] = []
-        text_character_count = 0
-        alphanumeric_character_count = 0
+    pages: list[ExtractedPage] = []
+    text_character_count = 0
+    alphanumeric_character_count = 0
 
-        try:
-            for page_number, page in enumerate(document, start=1):
-                text = "\n".join(
-                    line.strip()
-                    for line in page.get_text("text").replace("\x00", "").splitlines()
-                ).strip()
-                text_character_count += len(text)
-                if text_character_count > MAX_PDF_TEXT_CHARACTERS:
-                    raise PDFTooLargeError(
-                        "The extracted PDF text exceeds the 120,000-character analysis limit."
-                    )
-                alphanumeric_character_count += sum(char.isalnum() for char in text)
-                pages.append(ExtractedPage(page_number=page_number, text=text))
-        except PDFTooLargeError:
-            raise
-        except Exception as exc:
-            raise PDFExtractionError("Text could not be extracted from the PDF.") from exc
+    try:
+        for page_number, page in enumerate(document.pages, start=1):
+            text = "\n".join(
+                line.strip()
+                for line in (page.extract_text() or "").replace("\x00", "").splitlines()
+            ).strip()
+            text_character_count += len(text)
+            if text_character_count > MAX_PDF_TEXT_CHARACTERS:
+                raise PDFTooLargeError(
+                    "The extracted PDF text exceeds the 120,000-character analysis limit."
+                )
+            alphanumeric_character_count += sum(char.isalnum() for char in text)
+            pages.append(ExtractedPage(page_number=page_number, text=text))
+    except PDFTooLargeError:
+        raise
+    except Exception as exc:
+        raise PDFExtractionError("Text could not be extracted from the PDF.") from exc
 
     if alphanumeric_character_count < MIN_EXTRACTABLE_ALPHANUMERIC_CHARACTERS:
         raise NoExtractableTextError(
