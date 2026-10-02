@@ -4,10 +4,14 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
+<<<<<<< HEAD
 from google.adk.events import Event
 from google.genai import types
 
 from my_agent.backend import adk_runner
+=======
+
+>>>>>>> 2c45288313cf742abf248695f11136fbf9fae068
 from my_agent.backend import main
 from my_agent.backend.adk_runner import run_specialized_agent
 from my_agent.backend.pdf.document_classifier import (
@@ -44,6 +48,7 @@ def sample_document():
     )
 
 
+<<<<<<< HEAD
 class StubRunner:
     def __init__(self, events):
         self.events = events
@@ -53,6 +58,8 @@ class StubRunner:
             yield event
 
 
+=======
+>>>>>>> 2c45288313cf742abf248695f11136fbf9fae068
 class DocumentClassifierTests(unittest.IsolatedAsyncioTestCase):
     async def classify_with_output(self, output):
         with (
@@ -284,6 +291,7 @@ class WorkflowRouterTests(unittest.IsolatedAsyncioTestCase):
 
 
 class SharedRunnerTests(unittest.IsolatedAsyncioTestCase):
+<<<<<<< HEAD
     async def run_events(self, events):
         with patch.object(
             adk_runner,
@@ -353,6 +361,8 @@ class SharedRunnerTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result, "Useful result")
 
+=======
+>>>>>>> 2c45288313cf742abf248695f11136fbf9fae068
     async def test_specialized_agent_uses_shared_runner_session_services(self):
         agent = academic_generalresearch_agent
         with (
@@ -373,6 +383,7 @@ class SharedRunnerTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ApplicationIntegrationTests(unittest.TestCase):
+<<<<<<< HEAD
     def test_pdf_endpoint_returns_final_adk_text_without_502(self):
         classification = DocumentClassification(
             document_type="general",
@@ -410,6 +421,8 @@ class ApplicationIntegrationTests(unittest.TestCase):
         self.assertEqual(response.json()["workflow"], "general")
         self.assertEqual(response.json()["result"]["response"], "Analyzed paper.")
 
+=======
+>>>>>>> 2c45288313cf742abf248695f11136fbf9fae068
     def test_general_pdf_response_includes_backward_compatible_fields(self):
         workflow_result = router.ResearchWorkflowResult(
             document=DocumentClassification(

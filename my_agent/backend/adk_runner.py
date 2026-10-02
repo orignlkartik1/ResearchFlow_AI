@@ -1,7 +1,10 @@
 import logging
 
 from google.adk.agents import Agent
+<<<<<<< HEAD
 from google.adk.events import Event
+=======
+>>>>>>> 2c45288313cf742abf248695f11136fbf9fae068
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
@@ -20,6 +23,7 @@ class AgentSessionCleanupError(RuntimeError):
     """Raised when a short-lived ADK session cannot be deleted."""
 
 
+<<<<<<< HEAD
 def _final_response_text(event: Event) -> str:
     if not event.is_final_response() or event.content is None:
         return ""
@@ -32,6 +36,8 @@ def _final_response_text(event: Event) -> str:
     return "".join(text_parts)
 
 
+=======
+>>>>>>> 2c45288313cf742abf248695f11136fbf9fae068
 def _create_runner(
     llm_model: str | None = None,
     search_model: str | None = None,
