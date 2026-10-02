@@ -1,20 +1,19 @@
 import json
 import os
 import unittest
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
-<<<<<<< HEAD
 from google.adk.events import Event
+from google.adk.utils.instructions_utils import inject_session_state
 from google.genai import types
 
 from my_agent.backend import adk_runner
-=======
-
->>>>>>> 2c45288313cf742abf248695f11136fbf9fae068
 from my_agent.backend import main
 from my_agent.backend.adk_runner import run_specialized_agent
 from my_agent.backend.pdf.document_classifier import (
+    DOCUMENT_CLASSIFIER_INSTRUCTION,
     DocumentClassification,
     classify_document,
 )
@@ -23,6 +22,22 @@ from my_agent.backend.research import router
 from my_agent.sub_agents.academic_generalresearch.agent import (
     academic_generalresearch_agent,
 )
+from my_agent.sub_agents.academic_generalresearch.prompt import (
+    ACADEMIC_GENERALRESEARCH_PROMPT,
+)
+from my_agent.sub_agents.academic_newresearch.agent import (
+    academic_newresearch_agent,
+)
+from my_agent.sub_agents.academic_webresearch.agent import (
+    academic_websearch_agent,
+)
+from my_agent.sub_agents.research_context import (
+    FutureResearchInput,
+    TargetPaper,
+    WebSearchInput,
+)
+from my_agent.agent import root_agent
+from my_agent.prompt import ACADEMIC_COORDINATOR_PROMPT
 
 
 def classification_output(**overrides):
@@ -48,7 +63,6 @@ def sample_document():
     )
 
 
-<<<<<<< HEAD
 class StubRunner:
     def __init__(self, events):
         self.events = events
@@ -58,8 +72,6 @@ class StubRunner:
             yield event
 
 
-=======
->>>>>>> 2c45288313cf742abf248695f11136fbf9fae068
 class DocumentClassifierTests(unittest.IsolatedAsyncioTestCase):
     async def classify_with_output(self, output):
         with (
@@ -218,6 +230,9 @@ class WorkflowRouterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.document.document_type, "seminal")
         self.assertEqual(result.response, "Seminal analysis")
         self.assertIn("classified as a seminal/foundational paper", ask_agent.await_args.args[1])
+        self.assertIn("Document type: seminal", ask_agent.await_args.args[1])
+        self.assertIn('"title": "Foundational Paper"', ask_agent.await_args.args[1])
+        self.assertIn("target_paper", ask_agent.await_args.args[1])
         self.assertIn("[Page 1]", ask_agent.await_args.args[1])
         general_agent.assert_not_awaited()
         cleanup.assert_awaited_once()
@@ -244,6 +259,8 @@ class WorkflowRouterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.response, "Paper analysis")
         self.assertIs(general_agent.await_args.args[2], academic_generalresearch_agent)
         self.assertIn("general research paper", general_agent.await_args.args[1])
+        self.assertIn("Document type: general", general_agent.await_args.args[1])
+        self.assertIn('"title": "Recent Paper"', general_agent.await_args.args[1])
         self.assertIn("Do not ask for a seminal paper", general_agent.await_args.args[1])
         seminal_agent.assert_not_awaited()
         cleanup.assert_awaited_once()
@@ -291,7 +308,6 @@ class WorkflowRouterTests(unittest.IsolatedAsyncioTestCase):
 
 
 class SharedRunnerTests(unittest.IsolatedAsyncioTestCase):
-<<<<<<< HEAD
     async def run_events(self, events):
         with patch.object(
             adk_runner,
@@ -361,8 +377,6 @@ class SharedRunnerTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result, "Useful result")
 
-=======
->>>>>>> 2c45288313cf742abf248695f11136fbf9fae068
     async def test_specialized_agent_uses_shared_runner_session_services(self):
         agent = academic_generalresearch_agent
         with (
@@ -382,8 +396,66 @@ class SharedRunnerTests(unittest.IsolatedAsyncioTestCase):
         self.assertIs(run_once.await_args.kwargs["agent"], agent)
 
 
+class AgentContextContractTests(unittest.IsolatedAsyncioTestCase):
+    def test_agents_use_explicit_paper_data_and_no_template_references(self):
+        self.assertIsNone(root_agent.output_key)
+        self.assertIs(academic_websearch_agent.input_schema, WebSearchInput)
+        self.assertIs(academic_newresearch_agent.input_schema, FutureResearchInput)
+
+        for instruction in (
+            ACADEMIC_COORDINATOR_PROMPT,
+            academic_websearch_agent.instruction,
+            academic_newresearch_agent.instruction,
+            ACADEMIC_GENERALRESEARCH_PROMPT,
+        ):
+            self.assertNotIn("{", instruction)
+            self.assertNotIn("}", instruction)
+
+    async def test_adk_instruction_injection_requires_no_implicit_state(self):
+        context = SimpleNamespace(
+            _invocation_context=SimpleNamespace(
+                session=SimpleNamespace(state={}),
+            )
+        )
+        for instruction in (
+            ACADEMIC_COORDINATOR_PROMPT,
+            academic_websearch_agent.instruction,
+            academic_newresearch_agent.instruction,
+            ACADEMIC_GENERALRESEARCH_PROMPT,
+            DOCUMENT_CLASSIFIER_INSTRUCTION,
+        ):
+            with self.subTest(instruction=instruction[:30]):
+                self.assertEqual(
+                    await inject_session_state(instruction, context),
+                    instruction,
+                )
+
+    async def test_target_paper_metadata_is_optional_in_downstream_inputs(self):
+        target = TargetPaper(title="Example paper", authors=["A. Author"], year=2024)
+        search_input = WebSearchInput(
+            document_type="general",
+            target_paper=target,
+        )
+        future_input = FutureResearchInput(
+            document_type="general",
+            target_paper=target,
+            recent_research="No useful results found.",
+        )
+
+        self.assertIsNone(search_input.target_paper.doi)
+        self.assertIsNone(future_input.target_paper.url)
+        self.assertEqual(future_input.recent_research, "No useful results found.")
+
+    async def test_general_paper_agent_has_both_research_tools(self):
+        tool_agents = {tool.agent.name for tool in academic_generalresearch_agent.tools}
+
+        self.assertEqual(
+            tool_agents,
+            {"academic_websearch_agent", "academic_newresearch_agent"},
+        )
+
+
 class ApplicationIntegrationTests(unittest.TestCase):
-<<<<<<< HEAD
     def test_pdf_endpoint_returns_final_adk_text_without_502(self):
         classification = DocumentClassification(
             document_type="general",
@@ -421,8 +493,6 @@ class ApplicationIntegrationTests(unittest.TestCase):
         self.assertEqual(response.json()["workflow"], "general")
         self.assertEqual(response.json()["result"]["response"], "Analyzed paper.")
 
-=======
->>>>>>> 2c45288313cf742abf248695f11136fbf9fae068
     def test_general_pdf_response_includes_backward_compatible_fields(self):
         workflow_result = router.ResearchWorkflowResult(
             document=DocumentClassification(

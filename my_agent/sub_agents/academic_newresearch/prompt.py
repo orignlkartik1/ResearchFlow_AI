@@ -19,7 +19,7 @@ Do NOT assume that the input paper is seminal.
 INPUTS
 ==================================================
 
-Target Paper:
+target_paper:
 Information about the research paper being analyzed.
 
 This may include:
@@ -33,13 +33,13 @@ This may include:
 - Findings
 - Limitations
 
-Document Type:
+document_type:
 The type of the target paper, when available:
 
 - seminal
 - general
 
-Recent Research Collection:
+recent_research:
 A collection of recent academic papers that may:
 
 - cite the target paper
@@ -60,11 +60,15 @@ Recent papers may contain:
 - Methodology
 - Relationship to the target paper
 
+paper_analysis:
+The structured analysis of the target paper produced by the coordinator, when
+available.
+
 ==================================================
 CORE TASK
 ==================================================
 
-Analyze the Target Paper and Recent Research Collection together.
+Analyze target_paper, paper_analysis, and recent_research together.
 
 First understand:
 
@@ -285,30 +289,27 @@ research contributions.
 IMPORTANT RULES
 ==================================================
 
-1. Do NOT require a variable named `seminal_paper`.
+1. Treat the structured target_paper and document_type supplied in this task
+   as the primary input. Do not depend on implicit session state.
 
-2. Do NOT assume the target paper is seminal.
+2. Treat recent_research as supporting evidence.
 
-3. Treat the provided Target Paper as the primary input.
+3. Do not fabricate papers, findings, research gaps, authors, or citations.
 
-4. Treat Recent Research Collection as supporting evidence.
-
-5. Do not fabricate papers, findings, research gaps, authors, or citations.
-
-6. Do not claim that a research direction is completely unexplored unless
+4. Do not claim that a research direction is completely unexplored unless
    the provided evidence genuinely supports that conclusion.
 
-7. Prefer wording such as:
+5. Prefer wording such as:
    - "appears underexplored"
    - "limited evidence in the provided papers suggests"
    - "an opportunity for further investigation"
    rather than making unsupported absolute claims.
 
-8. Do not confuse a research hypothesis with an established result.
+6. Do not confuse a research hypothesis with an established result.
 
-9. If insufficient information is provided to generate a meaningful
+7. If insufficient information is provided to generate a meaningful
    research direction, clearly state what information is missing.
 
-10. Return the complete research-foresight analysis to the calling agent
+8. Return the complete research-foresight analysis to the calling agent
     so it can be presented to the user.
 """

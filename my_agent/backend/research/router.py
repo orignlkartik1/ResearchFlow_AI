@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 from dataclasses import dataclass
@@ -30,10 +31,23 @@ class ResearchWorkflowResult:
 
 def _workflow_message(document: ExtractedDocument, classification: DocumentClassification) -> str:
     paper_text = document.research_text()
+    target_paper = {
+        "title": classification.title,
+        "authors": classification.authors,
+        "year": classification.publication_year,
+        "doi": None,
+        "url": None,
+    }
+    paper_context = (
+        f"Document type: {classification.document_type}\n"
+        "Known target_paper metadata (null means not identified by the classifier):\n"
+        f"{json.dumps(target_paper, ensure_ascii=False)}\n"
+    )
     if classification.document_type == "seminal":
         return (
             "The uploaded document has been classified as a seminal/foundational "
-            f"paper with {classification.confidence:.0%} confidence. Analyze it "
+            f"paper with {classification.confidence:.0%} confidence.\n"
+            f"{paper_context}\nAnalyze it "
             "using the existing seminal-paper ResearchFlow workflow: establish "
             "paper context, find recent citing papers, and synthesize future "
             "research directions. Do not ask the user to provide the paper again. "
@@ -42,6 +56,7 @@ def _workflow_message(document: ExtractedDocument, classification: DocumentClass
         )
     return (
         "The uploaded document is being analyzed as a general research paper. "
+        f"{paper_context}\n"
         "Analyze the supplied paper using the general paper-analysis workflow. "
         "Do not ask for a seminal paper or assume this paper is foundational. "
         "Explicitly distinguish document-supported information from suggestions "
@@ -53,7 +68,8 @@ def _workflow_message(document: ExtractedDocument, classification: DocumentClass
 
 async def process_document(document: ExtractedDocument) -> ResearchWorkflowResult:
     """Understand a PDF and route it to its specialized research workflow."""
-    classification = await classify_document(document.research_text())
+    document_text = document.research_text()
+    classification = await classify_document(document_text)
     use_seminal_workflow = (
         classification.document_type == "seminal"
         and not classification.classification_uncertain
@@ -79,6 +95,17 @@ async def process_document(document: ExtractedDocument) -> ResearchWorkflowResul
 
     user_id = f"pdf-{workflow}-{uuid.uuid4().hex}"
     message = _workflow_message(document, classification)
+    target_paper_present = bool(document_text.strip())
+    logger.info(
+        "Research workflow state: document_text_present=%s, document_type=%s, "
+        "target_paper_present=%s, recent_research_present=%s, "
+        "recent_research_type=%s",
+        bool(document_text.strip()),
+        workflow,
+        target_paper_present,
+        False,
+        "pending",
+    )
     try:
         if workflow == "seminal":
             response = await ask_agent(user_id, message)

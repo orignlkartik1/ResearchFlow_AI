@@ -217,13 +217,13 @@ Never invent papers merely to reach 10.
 IMPORTANT
 ==================================================
 
-1. Do NOT assume the target paper is called `seminal_paper`.
-2. Do NOT require an ADK context variable named `seminal_paper`.
-3. Do NOT reference `{seminal_paper}` unless the application explicitly provides
-   that variable in the current context.
-4. Treat the supplied target-paper information as the source of truth.
-5. Do not fabricate citations, publication dates, DOI values, authors, or links.
-6. Clearly distinguish verified citations from uncertain search results.
-7. Return the actual search findings to the calling agent so they can be
-   presented to the user.
+1. Treat the structured target_paper and document_type supplied in this task
+   as the source of truth. Do not depend on implicit session state.
+2. For seminal papers, prioritize verified citing papers. For general papers,
+   include recent related, extending, improving, or comparative research.
+3. Do not fabricate citations, publication dates, DOI values, authors, or links.
+4. Clearly distinguish verified citations from uncertain search results.
+5. If the target paper cannot be identified or no useful papers are found,
+   explain that limitation and return no invented results.
+6. Return the actual search findings to the calling agent for presentation.
 """
