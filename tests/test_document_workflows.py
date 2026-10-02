@@ -4,7 +4,10 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
+from google.adk.events import Event
+from google.genai import types
 
+from my_agent.backend import adk_runner
 from my_agent.backend import main
 from my_agent.backend.adk_runner import run_specialized_agent
 from my_agent.backend.pdf.document_classifier import (
@@ -39,6 +42,15 @@ def sample_document():
             ExtractedPage(2, "Page two contains additional research findings."),
         ),
     )
+
+
+class StubRunner:
+    def __init__(self, events):
+        self.events = events
+
+    async def run_async(self, **kwargs):
+        for event in self.events:
+            yield event
 
 
 class DocumentClassifierTests(unittest.IsolatedAsyncioTestCase):
@@ -272,6 +284,75 @@ class WorkflowRouterTests(unittest.IsolatedAsyncioTestCase):
 
 
 class SharedRunnerTests(unittest.IsolatedAsyncioTestCase):
+    async def run_events(self, events):
+        with patch.object(
+            adk_runner,
+            "_create_runner",
+            return_value=StubRunner(events),
+        ):
+            return await adk_runner._run_once(
+                user_id="runner-test",
+                session_id="runner-test",
+                message="test message",
+                llm_model=None,
+            )
+
+    async def test_extracts_normal_text_response(self):
+        result = await self.run_events(
+            [Event(content=types.Content(parts=[types.Part(text="Agent response")]))]
+        )
+
+        self.assertEqual(result, "Agent response")
+
+    async def test_event_without_content_does_not_raise(self):
+        result = await self.run_events([Event()])
+
+        self.assertEqual(result, "")
+
+    async def test_content_without_parts_does_not_raise(self):
+        result = await self.run_events([Event(content=types.Content())])
+
+        self.assertEqual(result, "")
+
+    async def test_extracts_all_text_parts_in_order(self):
+        result = await self.run_events(
+            [
+                Event(
+                    content=types.Content(
+                        parts=[
+                            types.Part(text="First "),
+                            types.Part(),
+                            types.Part(text="second"),
+                        ]
+                    )
+                )
+            ]
+        )
+
+        self.assertEqual(result, "First second")
+
+    async def test_tool_call_event_does_not_hide_final_text(self):
+        tool_event = Event(
+            content=types.Content(
+                parts=[types.Part(function_call=types.FunctionCall(name="search"))]
+            )
+        )
+        final_event = Event(
+            content=types.Content(parts=[types.Part(text="Research completed")])
+        )
+
+        result = await self.run_events([tool_event, final_event])
+
+        self.assertFalse(tool_event.is_final_response())
+        self.assertEqual(result, "Research completed")
+
+    async def test_later_empty_final_event_does_not_erase_agent_text(self):
+        text_event = Event(content=types.Content(parts=[types.Part(text="Useful result")]))
+
+        result = await self.run_events([text_event, Event()])
+
+        self.assertEqual(result, "Useful result")
+
     async def test_specialized_agent_uses_shared_runner_session_services(self):
         agent = academic_generalresearch_agent
         with (
@@ -292,6 +373,43 @@ class SharedRunnerTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ApplicationIntegrationTests(unittest.TestCase):
+    def test_pdf_endpoint_returns_final_adk_text_without_502(self):
+        classification = DocumentClassification(
+            document_type="general",
+            confidence=0.86,
+            title="Recent Paper",
+        )
+        runner = StubRunner(
+            [
+                Event(
+                    content=types.Content(
+                        parts=[types.Part(text="Analyzed "), types.Part(text="paper.")]
+                    )
+                )
+            ]
+        )
+        with (
+            patch.dict(os.environ, {"ENABLE_TELEGRAM": "false"}, clear=True),
+            patch.object(main, "extract_pdf", return_value=sample_document()),
+            patch.object(
+                router,
+                "classify_document",
+                new=AsyncMock(return_value=classification),
+            ),
+            patch.object(adk_runner, "_ensure_session", new=AsyncMock()),
+            patch.object(adk_runner, "_create_runner", return_value=runner),
+            patch.object(router, "discard_agent_session", new=AsyncMock()),
+            TestClient(main.app) as client,
+        ):
+            response = client.post(
+                "/api/analyze-pdf",
+                files={"file": ("paper.pdf", b"%PDF-1.7 test")},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["workflow"], "general")
+        self.assertEqual(response.json()["result"]["response"], "Analyzed paper.")
+
     def test_general_pdf_response_includes_backward_compatible_fields(self):
         workflow_result = router.ResearchWorkflowResult(
             document=DocumentClassification(
